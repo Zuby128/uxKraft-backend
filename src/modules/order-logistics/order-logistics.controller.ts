@@ -1,0 +1,96 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseIntPipe,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { OrderLogisticsService } from './order-logistics.service';
+import { CreateOrderLogisticsDto } from './dto/create-order-logistics.dto';
+import { UpdateOrderLogisticsDto } from './dto/update-order-logistics.dto';
+
+@ApiTags('Order Logistics')
+@Controller('order-logistics')
+export class OrderLogisticsController {
+  constructor(private readonly orderLogisticsService: OrderLogisticsService) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Create order logistics for an order item' })
+  @ApiResponse({
+    status: 201,
+    description: 'Order logistics created successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid order item ID' })
+  @ApiResponse({
+    status: 409,
+    description: 'Logistics already exists for this order item',
+  })
+  create(@Body() createOrderLogisticsDto: CreateOrderLogisticsDto) {
+    return this.orderLogisticsService.create(createOrderLogisticsDto);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all order logistics records' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all order logistics records',
+  })
+  findAll() {
+    return this.orderLogisticsService.findAll();
+  }
+
+  @Get('order-item/:orderItemId')
+  @ApiOperation({ summary: 'Get logistics by order item ID' })
+  @ApiParam({ name: 'orderItemId', description: 'Order item ID' })
+  @ApiResponse({ status: 200, description: 'Returns the logistics record' })
+  @ApiResponse({
+    status: 404,
+    description: 'Order item or logistics not found',
+  })
+  findByOrderItem(@Param('orderItemId', ParseIntPipe) orderItemId: number) {
+    return this.orderLogisticsService.findByOrderItem(orderItemId);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get order logistics by ID' })
+  @ApiParam({ name: 'id', description: 'Logistics ID' })
+  @ApiResponse({ status: 200, description: 'Returns the logistics record' })
+  @ApiResponse({ status: 404, description: 'Order logistics not found' })
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.orderLogisticsService.findOne(id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update order logistics' })
+  @ApiParam({ name: 'id', description: 'Logistics ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Order logistics updated successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Order logistics not found' })
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateOrderLogisticsDto: UpdateOrderLogisticsDto,
+  ) {
+    return this.orderLogisticsService.update(id, updateOrderLogisticsDto);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete order logistics' })
+  @ApiParam({ name: 'id', description: 'Logistics ID' })
+  @ApiResponse({
+    status: 204,
+    description: 'Order logistics deleted successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Order logistics not found' })
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.orderLogisticsService.remove(id);
+  }
+}

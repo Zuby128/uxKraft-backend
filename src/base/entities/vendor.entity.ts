@@ -69,6 +69,6 @@ export class Vendor extends Model<Vendor> {
   @HasMany(() => VendorAddress)
   addresses: VendorAddress[];
 
-  // @HasMany(() => OrderItem)
-  // orderItems: OrderItem[];
+  @HasMany(() => OrderItem)
+  orderItems: OrderItem[];
 }

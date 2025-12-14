@@ -107,6 +107,13 @@ export class OrderItem extends Model<OrderItem> {
   })
   upload: string[];
 
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+    field: 'phase',
+  })
+  phase: number;
+
   @ForeignKey(() => Customer)
   @Column({
     type: DataType.INTEGER,

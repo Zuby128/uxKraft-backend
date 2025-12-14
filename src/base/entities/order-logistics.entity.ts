@@ -65,13 +65,6 @@ export class OrderLogistics extends Model<OrderLogistics> {
   })
   shippingNotes: string;
 
-  @Column({
-    type: DataType.INTEGER,
-    allowNull: true,
-    field: 'phase',
-  })
-  phase: number;
-
   @CreatedAt
   @Column({
     type: DataType.DATE,
