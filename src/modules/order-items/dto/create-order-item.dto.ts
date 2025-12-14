@@ -67,16 +67,6 @@ export class CreateOrderItemDto {
   markupPercentage?: number;
 
   @ApiPropertyOptional({
-    description: 'Upload file URLs',
-    example: ['invoice.pdf', 'receipt.jpg'],
-    type: [String],
-  })
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  upload?: string[];
-
-  @ApiPropertyOptional({
     description: 'Ship to customer ID',
     example: 1,
   })

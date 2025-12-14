@@ -11,8 +11,8 @@ import {
   CreatedAt,
   UpdatedAt,
   DeletedAt,
-  BeforeCreate,
   BeforeUpdate,
+  BeforeValidate,
 } from 'sequelize-typescript';
 import { ItemCategory } from './item-category.entity';
 
@@ -156,7 +156,7 @@ export class Item extends Model<Item> {
   category: ItemCategory;
 
   // Hooks - Auto calculate total_price
-  @BeforeCreate
+  @BeforeValidate
   @BeforeUpdate
   static calculateTotalPrice(instance: Item) {
     if (

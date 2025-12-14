@@ -22,6 +22,7 @@ import {
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
 import { ItemService } from './item.service';
+import { BulkUpdateItemDto } from './dto/bulk-update-item.dto';
 
 @ApiTags('Items')
 @Controller('items')
@@ -111,5 +112,28 @@ export class ItemController {
   @ApiResponse({ status: 409, description: 'Item is not deleted' })
   restore(@Param('id', ParseIntPipe) id: number) {
     return this.itemsService.restore(id);
+  }
+
+  @Patch('bulk-update')
+  @ApiOperation({ summary: 'Bulk update multiple items' })
+  @ApiResponse({
+    status: 200,
+    description: 'Items updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        updatedCount: { type: 'number', example: 5 },
+        updatedItems: {
+          type: 'array',
+          items: { type: 'object' },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid item IDs or category ID' })
+  @ApiResponse({ status: 404, description: 'No items found with provided IDs' })
+  bulkUpdate(@Body() bulkUpdateItemDto: BulkUpdateItemDto) {
+    const { itemIds, ...updateData } = bulkUpdateItemDto;
+    return this.itemsService.bulkUpdate(itemIds, updateData);
   }
 }

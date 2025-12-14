@@ -114,4 +114,62 @@ export class OrderPlanningService {
     const planning = await this.findOne(id);
     await planning.destroy(); // Hard delete (no soft delete for planning)
   }
+
+  async bulkUpdate(
+    orderItemIds: number[],
+    updateData: {
+      poApprovalDate?: string;
+      hotelNeedByDate?: string;
+      expectedDelivery?: string;
+    },
+  ): Promise<{ totalCount: number; results: OrderPlanning[] }> {
+    const orderItems = await this.orderItemModel.findAll({
+      where: { orderItemId: orderItemIds },
+    });
+
+    if (orderItems.length === 0) {
+      throw new NotFoundException('No order items found with the provided IDs');
+    }
+
+    if (orderItems.length !== orderItemIds.length) {
+      const foundIds = orderItems.map((item) => item.orderItemId);
+      const notFoundIds = orderItemIds.filter((id) => !foundIds.includes(id));
+      throw new BadRequestException(
+        `Order items not found: ${notFoundIds.join(', ')}`,
+      );
+    }
+
+    try {
+      await this.orderPlanningModel.bulkCreate(
+        orderItemIds.map((orderItemId) => ({
+          orderItemId,
+          ...updateData,
+        })) as any,
+        {
+          updateOnDuplicate: [
+            'poApprovalDate',
+            'hotelNeedByDate',
+            'expectedDelivery',
+            'updatedAt',
+          ],
+        },
+      );
+
+      const results = await this.orderPlanningModel.findAll({
+        where: { orderItemId: orderItemIds },
+        include: [OrderItem],
+        order: [['planningId', 'ASC']],
+      });
+
+      return {
+        totalCount: results.length,
+        results,
+      };
+    } catch (error) {
+      console.error('Bulk update error:', error);
+      throw new InternalServerErrorException(
+        'Failed to bulk update order planning',
+      );
+    }
+  }
 }

@@ -7,6 +7,7 @@ import { Item } from 'src/base/entities/item.entity';
 import { Vendor } from 'src/base/entities/vendor.entity';
 import { VendorAddress } from 'src/base/entities/vendor-address.entity';
 import { Customer } from 'src/base/entities/customer.entity';
+import { Upload } from 'src/base/entities/upload.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { Customer } from 'src/base/entities/customer.entity';
       Vendor,
       VendorAddress,
       Customer,
+      Upload,
     ]),
   ],
   providers: [OrderItemsService],

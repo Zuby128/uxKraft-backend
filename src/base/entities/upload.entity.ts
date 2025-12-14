@@ -8,7 +8,7 @@ import {
   ForeignKey,
   BelongsTo,
 } from 'sequelize-typescript';
-import { Item } from './item.entity';
+import { OrderItem } from './order-item.entity';
 
 @Table({
   tableName: 'uploads',
@@ -24,7 +24,7 @@ export class Upload extends Model<Upload> {
   })
   id: number;
 
-  @ForeignKey(() => Item)
+  @ForeignKey(() => OrderItem)
   @Column({
     type: DataType.INTEGER,
     allowNull: true,
@@ -47,6 +47,6 @@ export class Upload extends Model<Upload> {
   url: string;
 
   // Relations
-  @BelongsTo(() => Item)
-  item: Item;
+  @BelongsTo(() => OrderItem)
+  orderItem: OrderItem;
 }

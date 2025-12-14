@@ -118,4 +118,62 @@ export class OrderProductionService {
     const production = await this.findOne(id);
     await production.destroy(); // Hard delete (no soft delete for production)
   }
+
+  async bulkUpdate(
+    orderItemIds: number[],
+    updateData: {
+      cfaShopsSend?: string;
+      cfaShopsApproved?: string;
+      cfaShopsDelivered?: string;
+    },
+  ): Promise<{ totalCount: number; results: OrderProduction[] }> {
+    const orderItems = await this.orderItemModel.findAll({
+      where: { orderItemId: orderItemIds },
+    });
+
+    if (orderItems.length === 0) {
+      throw new NotFoundException('No order items found with the provided IDs');
+    }
+
+    if (orderItems.length !== orderItemIds.length) {
+      const foundIds = orderItems.map((item) => item.orderItemId);
+      const notFoundIds = orderItemIds.filter((id) => !foundIds.includes(id));
+      throw new BadRequestException(
+        `Order items not found: ${notFoundIds.join(', ')}`,
+      );
+    }
+
+    try {
+      await this.orderProductionModel.bulkCreate(
+        orderItemIds.map((orderItemId) => ({
+          orderItemId,
+          ...updateData,
+        })) as any,
+        {
+          updateOnDuplicate: [
+            'cfaShopsSend',
+            'cfaShopsApproved',
+            'cfaShopsDelivered',
+            'updatedAt',
+          ],
+        },
+      );
+
+      const results = await this.orderProductionModel.findAll({
+        where: { orderItemId: orderItemIds },
+        include: [OrderItem],
+        order: [['productionId', 'ASC']],
+      });
+
+      return {
+        totalCount: results.length,
+        results,
+      };
+    } catch (error) {
+      console.error('Bulk update error:', error);
+      throw new InternalServerErrorException(
+        'Failed to bulk update order production',
+      );
+    }
+  }
 }

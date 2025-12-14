@@ -14,6 +14,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { OrderProductionService } from './order-production.service';
 import { CreateOrderProductionDto } from './dto/create-order-production.dto';
 import { UpdateOrderProductionDto } from './dto/update-order-production.dto';
+import { BulkUpdateOrderProductionDto } from './dto/bulk-update-order-production';
 
 @ApiTags('Order Production')
 @Controller('order-production')
@@ -94,5 +95,31 @@ export class OrderProductionController {
   @ApiResponse({ status: 404, description: 'Order production not found' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.orderProductionService.remove(id);
+  }
+
+  @Patch('bulk-update')
+  @ApiOperation({ summary: 'Bulk update production for multiple order items' })
+  @ApiResponse({
+    status: 200,
+    description: 'Production updated/created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        totalCount: { type: 'number', example: 5 },
+        results: {
+          type: 'array',
+          items: { type: 'object' },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid order item IDs' })
+  @ApiResponse({
+    status: 404,
+    description: 'No order items found with provided IDs',
+  })
+  bulkUpdate(@Body() bulkUpdateDto: BulkUpdateOrderProductionDto) {
+    const { orderItemIds, ...updateData } = bulkUpdateDto;
+    return this.orderProductionService.bulkUpdate(orderItemIds, updateData);
   }
 }

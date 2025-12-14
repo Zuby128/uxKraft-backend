@@ -14,6 +14,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { OrderPlanningService } from './order-planning.service';
 import { CreateOrderPlanningDto } from './dto/create-order-planning.dto';
 import { UpdateOrderPlanningDto } from './dto/update-order-planning.dto';
+import { BulkUpdateOrderPlanningDto } from './dto/bulk-update-order-planning.dto';
 
 @ApiTags('Order Planning')
 @Controller('order-planning')
@@ -89,5 +90,31 @@ export class OrderPlanningController {
   @ApiResponse({ status: 404, description: 'Order planning not found' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.orderPlanningService.remove(id);
+  }
+
+  @Patch('bulk-update')
+  @ApiOperation({ summary: 'Bulk update planning for multiple order items' })
+  @ApiResponse({
+    status: 200,
+    description: 'Planning updated/created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        totalCount: { type: 'number', example: 5 },
+        results: {
+          type: 'array',
+          items: { type: 'object' },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid order item IDs' })
+  @ApiResponse({
+    status: 404,
+    description: 'No order items found with provided IDs',
+  })
+  bulkUpdate(@Body() bulkUpdateDto: BulkUpdateOrderPlanningDto) {
+    const { orderItemIds, ...updateData } = bulkUpdateDto;
+    return this.orderPlanningService.bulkUpdate(orderItemIds, updateData);
   }
 }

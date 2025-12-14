@@ -30,26 +30,29 @@ export class UploadsController {
   @Post()
   @ApiOperation({ summary: 'Create a new upload' })
   @ApiResponse({ status: 201, description: 'Upload created successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid item ID' })
+  @ApiResponse({ status: 400, description: 'Invalid order item ID' })
   create(@Body() createUploadDto: CreateUploadDto) {
     return this.uploadsService.create(createUploadDto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all uploads' })
-  @ApiQuery({ name: 'itemId', required: false, type: Number })
+  @ApiQuery({ name: 'orderItemId', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Returns all uploads' })
-  findAll(@Query('itemId', ParseIntPipe) itemId?: number) {
-    return this.uploadsService.findAll(itemId);
+  findAll(@Query('orderItemId', ParseIntPipe) orderItemId?: number) {
+    return this.uploadsService.findAll(orderItemId);
   }
 
-  @Get('item/:itemId')
-  @ApiOperation({ summary: 'Get uploads by item' })
-  @ApiParam({ name: 'itemId', description: 'Item ID' })
-  @ApiResponse({ status: 200, description: 'Returns uploads for the item' })
-  @ApiResponse({ status: 404, description: 'Item not found' })
-  findByItem(@Param('itemId', ParseIntPipe) itemId: number) {
-    return this.uploadsService.findByItem(itemId);
+  @Get('order-item/:orderItemId')
+  @ApiOperation({ summary: 'Get uploads by order item' })
+  @ApiParam({ name: 'orderItemId', description: 'Order Item ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns uploads for the order item',
+  })
+  @ApiResponse({ status: 404, description: 'Order item not found' })
+  findByOrderItem(@Param('orderItemId', ParseIntPipe) orderItemId: number) {
+    return this.uploadsService.findByOrderItem(orderItemId);
   }
 
   @Get(':id')
@@ -65,7 +68,7 @@ export class UploadsController {
   @ApiOperation({ summary: 'Update an upload' })
   @ApiParam({ name: 'id', description: 'Upload ID' })
   @ApiResponse({ status: 200, description: 'Upload updated successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid item ID' })
+  @ApiResponse({ status: 400, description: 'Invalid order item ID' })
   @ApiResponse({ status: 404, description: 'Upload not found' })
   update(
     @Param('id', ParseIntPipe) id: number,

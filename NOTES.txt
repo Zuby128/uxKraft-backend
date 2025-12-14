@@ -3,3 +3,10 @@ redis kurmadım gerekmiyor şu anda
 item içerisinde de fiyat tuttum, aslında gçmiş fiyatları da takip etmek için ayrı bir entity oluşturulabilirdi
 alanların içine çok şey eklenebilir ve geliştirilebilirdi ama minimal tuttuk
 order-item üstünde bir order oluşturulabilirdi ama mevcut sistemde birşey değiştirmeyeceği için bıraktım
+order-tripple da dto tarih string, date entity uyumsuzluğu üzerinde düşünmek gerek
+update file için aws gcp kullanabilirdim
+
+
+todo 
+response
+pagination

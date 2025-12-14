@@ -15,6 +15,7 @@ import { Customer } from 'src/base/entities/customer.entity';
 import { CreateOrderItemDto } from './dto/create-order-item.dto';
 import { UpdateOrderItemDto } from './dto/update-order-item.dto';
 import { FilterOrderItemDto } from './dto/filter-order-item.dto';
+import { Upload } from 'src/base/entities/upload.entity';
 
 @Injectable()
 export class OrderItemsService {
@@ -93,6 +94,7 @@ export class OrderItemsService {
           Vendor,
           { model: VendorAddress, as: 'vendorAddressRelation' },
           Customer,
+          Upload,
         ]
       : [];
 
@@ -164,6 +166,7 @@ export class OrderItemsService {
       },
       { model: VendorAddress, as: 'vendorAddressRelation' },
       Customer,
+      Upload,
     ];
 
     return this.orderItemModel.findAll({
@@ -180,6 +183,7 @@ export class OrderItemsService {
         Vendor,
         { model: VendorAddress, as: 'vendorAddressRelation' },
         Customer,
+        Upload,
       ],
     });
 
@@ -203,6 +207,7 @@ export class OrderItemsService {
         Vendor,
         { model: VendorAddress, as: 'vendorAddressRelation' },
         Customer,
+        Upload,
       ],
       order: [['orderItemId', 'DESC']],
     });
@@ -221,6 +226,7 @@ export class OrderItemsService {
         Vendor,
         { model: VendorAddress, as: 'vendorAddressRelation' },
         Customer,
+        Upload,
       ],
       order: [['orderItemId', 'DESC']],
     });
@@ -239,6 +245,7 @@ export class OrderItemsService {
         Vendor,
         { model: VendorAddress, as: 'vendorAddressRelation' },
         Customer,
+        Upload,
       ],
       order: [['orderItemId', 'DESC']],
     });
@@ -252,6 +259,7 @@ export class OrderItemsService {
         Vendor,
         { model: VendorAddress, as: 'vendorAddressRelation' },
         Customer,
+        Upload,
       ],
       order: [['orderItemId', 'DESC']],
     });

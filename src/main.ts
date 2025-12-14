@@ -1,7 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { HttpExceptionFilter } from '@common/exceptions/http.exception.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 
@@ -29,13 +28,12 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
 
-  app.useGlobalFilters(new HttpExceptionFilter());
-
   const config = new DocumentBuilder()
     .setTitle('UXKRAFT TASK')
     .setDescription('Api Documentation')
     .setVersion('1.0')
     .addTag('Categories', 'Category management endpoints')
+    .addTag('Customers', 'Customer management endpoints')
     .addBearerAuth(
       {
         description: 'Please enter token in following format: Bearer <JWT>',

@@ -10,7 +10,7 @@ export const databaseConfig: SequelizeModuleOptions = {
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'nestjs_db',
   autoLoadModels: true,
-  synchronize: false,
+  synchronize: true,
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
   pool: {
     max: 20,

@@ -38,6 +38,8 @@ export class ItemService {
       );
       return this.findOne(item.itemId);
     } catch (error) {
+      console.error('❌ Item creation error:', error);
+
       if (error.name === 'SequelizeUniqueConstraintError') {
         throw new ConflictException(
           'Item with this spec number already exists',
@@ -140,5 +142,59 @@ export class ItemService {
 
     await item.restore();
     return this.findOne(id);
+  }
+
+  async bulkUpdate(
+    itemIds: number[],
+    updateData: {
+      categoryId?: number;
+      location?: string;
+      shipFrom?: string;
+      notes?: string;
+    },
+  ): Promise<{ updatedCount: number; updatedItems: Item[] }> {
+    const items = await this.itemModel.findAll({
+      where: { itemId: itemIds },
+    });
+
+    if (items.length === 0) {
+      throw new NotFoundException('No items found with the provided IDs');
+    }
+
+    if (items.length !== itemIds.length) {
+      const foundIds = items.map((item) => item.itemId);
+      const notFoundIds = itemIds.filter((id) => !foundIds.includes(id));
+      throw new BadRequestException(
+        `Items not found: ${notFoundIds.join(', ')}`,
+      );
+    }
+
+    if (updateData.categoryId) {
+      const category = await this.categoryModel.findByPk(updateData.categoryId);
+      if (!category) {
+        throw new BadRequestException(
+          `Category with ID ${updateData.categoryId} not found`,
+        );
+      }
+    }
+
+    try {
+      const [updatedCount] = await this.itemModel.update(updateData, {
+        where: { itemId: itemIds },
+      });
+
+      const updatedItems = await this.itemModel.findAll({
+        where: { itemId: itemIds },
+        include: [ItemCategory],
+        order: [['itemName', 'ASC']],
+      });
+
+      return {
+        updatedCount,
+        updatedItems,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to bulk update items');
+    }
   }
 }

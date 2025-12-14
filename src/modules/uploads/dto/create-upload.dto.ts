@@ -3,7 +3,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateUploadDto {
   @ApiPropertyOptional({
-    description: 'Item ID',
+    description: 'Order Item ID',
     example: 1,
   })
   @IsOptional()

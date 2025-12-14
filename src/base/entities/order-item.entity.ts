@@ -11,8 +11,9 @@ import {
   CreatedAt,
   UpdatedAt,
   DeletedAt,
-  BeforeCreate,
   BeforeUpdate,
+  BeforeValidate,
+  HasMany,
 } from 'sequelize-typescript';
 import { Vendor } from './vendor.entity';
 import { VendorAddress } from './vendor-address.entity';
@@ -21,6 +22,7 @@ import { Customer } from './/customer.entity';
 import { OrderPlanning } from './order-planning.entity';
 import { OrderProduction } from './order-production.entity';
 import { OrderLogistics } from './order-logistics.entity';
+import { Upload } from './upload.entity';
 
 @Table({
   tableName: 'order_items',
@@ -101,18 +103,18 @@ export class OrderItem extends Model<OrderItem> {
   totalPrice: number;
 
   @Column({
-    type: DataType.ARRAY(DataType.TEXT),
-    allowNull: true,
-    field: 'upload',
-  })
-  upload: string[];
-
-  @Column({
     type: DataType.INTEGER,
     allowNull: true,
     field: 'phase',
   })
   phase: number;
+
+  @Column({
+    type: DataType.ARRAY(DataType.TEXT),
+    allowNull: true,
+    field: 'upload',
+  })
+  upload: string[];
 
   @ForeignKey(() => Customer)
   @Column({
@@ -156,6 +158,9 @@ export class OrderItem extends Model<OrderItem> {
   @BelongsTo(() => Customer)
   customer: Customer;
 
+  @HasMany(() => Upload)
+  uploads: Upload[];
+
   @HasOne(() => OrderPlanning)
   planning: OrderPlanning;
 
@@ -166,7 +171,7 @@ export class OrderItem extends Model<OrderItem> {
   logistics: OrderLogistics;
 
   // Hooks - Auto calculate total_price
-  @BeforeCreate
+  @BeforeValidate
   @BeforeUpdate
   static calculateTotalPrice(instance: OrderItem) {
     if (

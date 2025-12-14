@@ -118,4 +118,64 @@ export class OrderLogisticsService {
     const logistics = await this.findOne(id);
     await logistics.destroy(); // Hard delete (no soft delete for logistics)
   }
+
+  async bulkUpdate(
+    orderItemIds: number[],
+    updateData: {
+      orderedDate?: string;
+      shippedDate?: string;
+      deliveredDate?: string;
+      shippingNotes?: string;
+    },
+  ): Promise<{ totalCount: number; results: OrderLogistics[] }> {
+    const orderItems = await this.orderItemModel.findAll({
+      where: { orderItemId: orderItemIds },
+    });
+
+    if (orderItems.length === 0) {
+      throw new NotFoundException('No order items found with the provided IDs');
+    }
+
+    if (orderItems.length !== orderItemIds.length) {
+      const foundIds = orderItems.map((item) => item.orderItemId);
+      const notFoundIds = orderItemIds.filter((id) => !foundIds.includes(id));
+      throw new BadRequestException(
+        `Order items not found: ${notFoundIds.join(', ')}`,
+      );
+    }
+
+    try {
+      await this.orderLogisticsModel.bulkCreate(
+        orderItemIds.map((orderItemId) => ({
+          orderItemId,
+          ...updateData,
+        })) as any,
+        {
+          updateOnDuplicate: [
+            'orderedDate',
+            'shippedDate',
+            'deliveredDate',
+            'shippingNotes',
+            'updatedAt',
+          ],
+        },
+      );
+
+      const results = await this.orderLogisticsModel.findAll({
+        where: { orderItemId: orderItemIds },
+        include: [OrderItem],
+        order: [['logisticsId', 'ASC']],
+      });
+
+      return {
+        totalCount: results.length,
+        results,
+      };
+    } catch (error) {
+      console.error('Bulk update error:', error);
+      throw new InternalServerErrorException(
+        'Failed to bulk update order logistics',
+      );
+    }
+  }
 }
