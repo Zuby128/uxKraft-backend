@@ -53,11 +53,6 @@ export class OrderItemsController {
     description: 'Search in item name or spec number',
   })
   @ApiQuery({
-    name: 'vendorName',
-    required: false,
-    description: 'Filter by vendor name (partial match)',
-  })
-  @ApiQuery({
     name: 'vendorId',
     required: false,
     type: Number,

@@ -4,20 +4,12 @@ import { Type } from 'class-transformer';
 
 export class FilterOrderItemDto {
   @ApiPropertyOptional({
-    description: 'Search in item name, spec number',
+    description: 'Search in item name and spec number',
     example: 'sofa',
   })
   @IsOptional()
   @IsString()
   search?: string;
-
-  @ApiPropertyOptional({
-    description: 'Vendor name (partial match)',
-    example: 'ACME',
-  })
-  @IsOptional()
-  @IsString()
-  vendorName?: string;
 
   @ApiPropertyOptional({
     description: 'Vendor ID',

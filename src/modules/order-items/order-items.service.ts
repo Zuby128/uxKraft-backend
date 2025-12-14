@@ -33,7 +33,6 @@ export class OrderItemsService {
   ) {}
 
   async create(createOrderItemDto: CreateOrderItemDto): Promise<OrderItem> {
-    // Validate item exists
     const item = await this.itemModel.findByPk(createOrderItemDto.itemId);
     if (!item) {
       throw new BadRequestException(
@@ -41,7 +40,6 @@ export class OrderItemsService {
       );
     }
 
-    // Validate vendor if provided
     if (createOrderItemDto.vendorId) {
       const vendor = await this.vendorModel.findByPk(
         createOrderItemDto.vendorId,
@@ -53,7 +51,6 @@ export class OrderItemsService {
       }
     }
 
-    // Validate vendor address if provided
     if (createOrderItemDto.vendorAddress) {
       const vendorAddress = await this.vendorAddressModel.findByPk(
         createOrderItemDto.vendorAddress,
@@ -65,7 +62,6 @@ export class OrderItemsService {
       }
     }
 
-    // Validate customer if provided
     if (createOrderItemDto.shipTo) {
       const customer = await this.customerModel.findByPk(
         createOrderItemDto.shipTo,
@@ -107,29 +103,23 @@ export class OrderItemsService {
   async search(filterDto: FilterOrderItemDto): Promise<OrderItem[]> {
     const where: any = {};
     const itemWhere: any = {};
-    const vendorWhere: any = {};
 
-    // Phase filter
     if (filterDto.phase !== undefined) {
       where.phase = filterDto.phase;
     }
 
-    // Vendor ID filter
     if (filterDto.vendorId) {
       where.vendorId = filterDto.vendorId;
     }
 
-    // Item ID filter
     if (filterDto.itemId) {
       where.itemId = filterDto.itemId;
     }
 
-    // Customer ID filter
     if (filterDto.customerId) {
       where.shipTo = filterDto.customerId;
     }
 
-    // Price range filter
     if (filterDto.minPrice !== undefined || filterDto.maxPrice !== undefined) {
       where.totalPrice = {};
       if (filterDto.minPrice !== undefined) {
@@ -140,7 +130,6 @@ export class OrderItemsService {
       }
     }
 
-    // Search in item name or spec number
     if (filterDto.search) {
       itemWhere[Op.or] = [
         { itemName: { [Op.iLike]: `%${filterDto.search}%` } },
@@ -148,28 +137,21 @@ export class OrderItemsService {
       ];
     }
 
-    // Vendor name filter
-    if (filterDto.vendorName) {
-      vendorWhere.vendorName = { [Op.iLike]: `%${filterDto.vendorName}%` };
-    }
-
     const include: any[] = [
       {
         model: Item,
-        where: Object.keys(itemWhere).length > 0 ? itemWhere : undefined,
-        required: Object.keys(itemWhere).length > 0,
+        as: OrderItem.associations.item.as,
+        where: itemWhere,
+        required: true,
       },
-      {
-        model: Vendor,
-        where: Object.keys(vendorWhere).length > 0 ? vendorWhere : undefined,
-        required: Object.keys(vendorWhere).length > 0,
-      },
+      Vendor,
       { model: VendorAddress, as: 'vendorAddressRelation' },
       Customer,
       Upload,
     ];
 
     return this.orderItemModel.findAll({
+      logging: console.log,
       where: Object.keys(where).length > 0 ? where : undefined,
       include,
       order: [['orderItemId', 'DESC']],
