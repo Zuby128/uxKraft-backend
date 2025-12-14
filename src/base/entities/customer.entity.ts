@@ -38,6 +38,6 @@ export class Customer extends Model<Customer> {
   address: string;
 
   // Relations
-  @HasMany(() => OrderItem)
-  orderItems: OrderItem[];
+  // @HasMany(() => OrderItem)
+  // orderItems: OrderItem[];
 }

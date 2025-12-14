@@ -35,12 +35,7 @@ async function bootstrap() {
     .setTitle('UXKRAFT TASK')
     .setDescription('Api Documentation')
     .setVersion('1.0')
-    .addTag('Items', 'Item management endpoints')
     .addTag('Categories', 'Category management endpoints')
-    .addTag('Vendors', 'Vendor management endpoints')
-    .addTag('Customers', 'Customer management endpoints')
-    .addTag('Orders', 'Order management endpoints')
-    .addTag('Uploads', 'Upload management endpoints')
     .addBearerAuth(
       {
         description: 'Please enter token in following format: Bearer <JWT>',

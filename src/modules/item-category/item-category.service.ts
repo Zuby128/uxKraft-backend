@@ -11,7 +11,7 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CreationAttributes } from 'sequelize';
 
 @Injectable()
-export class CategoriesService {
+export class ItemCategoryService {
   constructor(
     @InjectModel(ItemCategory)
     private readonly categoryModel: typeof ItemCategory,
