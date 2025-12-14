@@ -1,0 +1,5 @@
+throttle kaldırdım güvenlik gerekmiyor
+redis kurmadım gerekmiyor şu anda
+item içerisinde de fiyat tuttum, aslında gçmiş fiyatları da takip etmek için ayrı bir entity oluşturulabilirdi
+alanların içine çok şey eklenebilir ve geliştirilebilirdi ama minimal tuttuk
+order-item üstünde bir order oluşturulabilirdi ama mevcut sistemde birşey değiştirmeyeceği için bıraktım
