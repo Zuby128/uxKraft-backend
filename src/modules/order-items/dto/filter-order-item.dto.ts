@@ -1,8 +1,9 @@
 import { IsOptional, IsString, IsInt, Min } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { PaginationDto } from './pagination.dto';
 
-export class FilterOrderItemDto {
+export class FilterOrderItemDto extends PaginationDto {
   @ApiPropertyOptional({
     description: 'Search in item name and spec number',
     example: 'sofa',

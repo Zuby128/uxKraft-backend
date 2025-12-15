@@ -86,20 +86,18 @@ export class OrderItemsService {
     }
   }
 
-  async findAll(includeRelations = true): Promise<OrderItem[]> {
+  async findAll(
+    includeRelations = true,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{ data: OrderItem[]; meta: any }> {
+    const offset = (page - 1) * limit;
+
     const include = includeRelations
       ? [
           Item,
           Vendor,
-          {
-            model: Vendor,
-            include: [
-              {
-                model: VendorAddress,
-                as: 'addresses',
-              },
-            ],
-          },
+          { model: VendorAddress, as: 'vendorAddressRelation' },
           Customer,
           Upload,
           OrderPlanning,
@@ -108,16 +106,35 @@ export class OrderItemsService {
         ]
       : [];
 
-    return this.orderItemModel.findAll({
+    const { count, rows } = await this.orderItemModel.findAndCountAll({
       include,
+      limit,
+      offset,
       order: [['orderItemId', 'DESC']],
+      distinct: true,
     });
+
+    return {
+      data: rows,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit),
+      },
+    };
   }
 
-  async search(filterDto: FilterOrderItemDto): Promise<OrderItem[]> {
+  async search(
+    filterDto: FilterOrderItemDto,
+  ): Promise<{ data: OrderItem[]; meta: any }> {
     const where: any = {};
     const itemWhere: any = {};
-    const vendorWhere: any = {};
+
+    // Pagination
+    const page = filterDto.page || 1;
+    const limit = filterDto.limit || 10;
+    const offset = (page - 1) * limit;
 
     // Phase filter
     if (filterDto.phase !== undefined) {
@@ -161,8 +178,8 @@ export class OrderItemsService {
     const include: any[] = [
       {
         model: Item,
-        where: Object.keys(itemWhere).length > 0 ? itemWhere : undefined,
-        required: Object.keys(itemWhere).length > 0, // INNER JOIN if search exists
+        where: itemWhere,
+        required: true,
       },
       Vendor,
       { model: VendorAddress, as: 'vendorAddressRelation' },
@@ -173,11 +190,24 @@ export class OrderItemsService {
       OrderLogistics,
     ];
 
-    return this.orderItemModel.findAll({
+    const { count, rows } = await this.orderItemModel.findAndCountAll({
       where: Object.keys(where).length > 0 ? where : undefined,
       include,
+      limit,
+      offset,
       order: [['orderItemId', 'DESC']],
+      distinct: true,
     });
+
+    return {
+      data: rows,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit),
+      },
+    };
   }
 
   async findOne(id: number): Promise<OrderItem> {

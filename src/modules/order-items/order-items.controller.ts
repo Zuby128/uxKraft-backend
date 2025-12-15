@@ -39,10 +39,29 @@ export class OrderItemsController {
   @Get()
   @ApiOperation({ summary: 'Get all order items' })
   @ApiQuery({ name: 'includeRelations', required: false, type: Boolean })
-  @ApiResponse({ status: 200, description: 'Returns all order items' })
-  findAll(@Query('includeRelations') includeRelations?: string) {
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10, max: 100)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all order items with pagination',
+  })
+  findAll(
+    @Query('includeRelations') includeRelations?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
     const include = includeRelations === 'true';
-    return this.orderItemsService.findAll(include);
+    return this.orderItemsService.findAll(include, page || 1, limit || 10);
   }
 
   @Get('search')
@@ -88,7 +107,22 @@ export class OrderItemsController {
     type: Number,
     description: 'Maximum total price (cents)',
   })
-  @ApiResponse({ status: 200, description: 'Returns filtered order items' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10, max: 100)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns filtered order items with pagination',
+  })
   search(@Query() filterDto: FilterOrderItemDto) {
     return this.orderItemsService.search(filterDto);
   }
