@@ -6,6 +6,8 @@ order-item üstünde bir order oluşturulabilirdi ama mevcut sistemde birşey de
 order-tripple da dto tarih string, date entity uyumsuzluğu üzerinde düşünmek gerek
 update file için aws gcp kullanabilirdim
 
+otomatik ilk adresi alıyorum vendor da
+
 
 todo 
 response

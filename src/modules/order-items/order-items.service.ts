@@ -16,6 +16,9 @@ import { CreateOrderItemDto } from './dto/create-order-item.dto';
 import { UpdateOrderItemDto } from './dto/update-order-item.dto';
 import { FilterOrderItemDto } from './dto/filter-order-item.dto';
 import { Upload } from 'src/base/entities/upload.entity';
+import { OrderPlanning } from 'src/base/entities/order-planning.entity';
+import { OrderProduction } from 'src/base/entities/order-production.entity';
+import { OrderLogistics } from 'src/base/entities/order-logistics.entity';
 
 @Injectable()
 export class OrderItemsService {
@@ -88,9 +91,20 @@ export class OrderItemsService {
       ? [
           Item,
           Vendor,
-          { model: VendorAddress, as: 'vendorAddressRelation' },
+          {
+            model: Vendor,
+            include: [
+              {
+                model: VendorAddress,
+                as: 'addresses',
+              },
+            ],
+          },
           Customer,
           Upload,
+          OrderPlanning,
+          OrderProduction,
+          OrderLogistics,
         ]
       : [];
 
@@ -103,23 +117,29 @@ export class OrderItemsService {
   async search(filterDto: FilterOrderItemDto): Promise<OrderItem[]> {
     const where: any = {};
     const itemWhere: any = {};
+    const vendorWhere: any = {};
 
+    // Phase filter
     if (filterDto.phase !== undefined) {
       where.phase = filterDto.phase;
     }
 
+    // Vendor ID filter
     if (filterDto.vendorId) {
       where.vendorId = filterDto.vendorId;
     }
 
+    // Item ID filter
     if (filterDto.itemId) {
       where.itemId = filterDto.itemId;
     }
 
+    // Customer ID filter
     if (filterDto.customerId) {
       where.shipTo = filterDto.customerId;
     }
 
+    // Price range filter
     if (filterDto.minPrice !== undefined || filterDto.maxPrice !== undefined) {
       where.totalPrice = {};
       if (filterDto.minPrice !== undefined) {
@@ -130,6 +150,7 @@ export class OrderItemsService {
       }
     }
 
+    // Search in item name or spec number
     if (filterDto.search) {
       itemWhere[Op.or] = [
         { itemName: { [Op.iLike]: `%${filterDto.search}%` } },
@@ -140,18 +161,19 @@ export class OrderItemsService {
     const include: any[] = [
       {
         model: Item,
-        as: OrderItem.associations.item.as,
-        where: itemWhere,
-        required: true,
+        where: Object.keys(itemWhere).length > 0 ? itemWhere : undefined,
+        required: Object.keys(itemWhere).length > 0, // INNER JOIN if search exists
       },
       Vendor,
       { model: VendorAddress, as: 'vendorAddressRelation' },
       Customer,
       Upload,
+      OrderPlanning,
+      OrderProduction,
+      OrderLogistics,
     ];
 
     return this.orderItemModel.findAll({
-      logging: console.log,
       where: Object.keys(where).length > 0 ? where : undefined,
       include,
       order: [['orderItemId', 'DESC']],
@@ -166,6 +188,9 @@ export class OrderItemsService {
         { model: VendorAddress, as: 'vendorAddressRelation' },
         Customer,
         Upload,
+        OrderPlanning,
+        OrderProduction,
+        OrderLogistics,
       ],
     });
 
