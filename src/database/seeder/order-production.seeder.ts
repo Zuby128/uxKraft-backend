@@ -1,62 +1,24 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { Seeder } from 'nestjs-seeder';
-import { OrderProduction } from 'src/base/entities/order-production.entity';
-import { OrderItem } from 'src/base/entities/order-item.entity';
+import { Sequelize } from 'sequelize-typescript';
 
-@Injectable()
-export class OrderProductionSeeder implements Seeder {
-  constructor(
-    @InjectModel(OrderProduction)
-    private readonly orderProductionModel: typeof OrderProduction,
-    @InjectModel(OrderItem)
-    private readonly orderItemModel: typeof OrderItem,
-  ) {}
+export async function seedOrderProduction(sequelize: Sequelize): Promise<void> {
+  console.log('🌱 Seeding order production...');
 
-  async seed(): Promise<any> {
-    // Get first 4 order items (some in production)
-    const orderItems = await this.orderItemModel.findAll({
-      limit: 4,
-      order: [['orderItemId', 'ASC']],
-    });
+  const OrderProduction = sequelize.models.OrderProduction;
+  const OrderItem = sequelize.models.OrderItem;
 
-    if (orderItems.length === 0) {
-      throw new Error('OrderItems must be seeded first!');
-    }
+  const items = await OrderItem.findAll({ limit: 2 });
 
-    const productionData = [
-      {
-        orderItemId: orderItems[0].orderItemId,
-        cfaShopsSend: new Date('2024-01-20'),
-        cfaShopsApproved: new Date('2024-01-25'),
-        cfaShopsDelivered: new Date('2024-02-05'),
-      },
-      {
-        orderItemId: orderItems[1].orderItemId,
-        cfaShopsSend: new Date('2024-01-22'),
-        cfaShopsApproved: new Date('2024-01-28'),
-        cfaShopsDelivered: null, // Still in production
-      },
-      {
-        orderItemId: orderItems[2].orderItemId,
-        cfaShopsSend: new Date('2024-01-25'),
-        cfaShopsApproved: null,
-        cfaShopsDelivered: null,
-      },
-      {
-        orderItemId: orderItems[3].orderItemId,
-        cfaShopsSend: new Date('2024-01-18'),
-        cfaShopsApproved: new Date('2024-01-22'),
-        cfaShopsDelivered: new Date('2024-02-01'),
-      },
-    ];
+  const production = [
+    {
+      orderItemId: items[0].get('orderItemId'),
+      cfaShopsSend: '2024-01-20',
+      cfaShopsApproved: '2024-01-25',
+    },
+  ];
 
-    return this.orderProductionModel.bulkCreate(productionData as any, {
-      ignoreDuplicates: true,
-    });
-  }
+  await OrderProduction.bulkCreate(production as any, {
+    ignoreDuplicates: true,
+  });
 
-  async drop(): Promise<any> {
-    return this.orderProductionModel.destroy({ where: {}, truncate: true });
-  }
+  console.log(`✅ Seeded ${production.length} order production records`);
 }

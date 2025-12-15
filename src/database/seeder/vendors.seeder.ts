@@ -1,31 +1,22 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { Seeder } from 'nestjs-seeder';
-import { Vendor } from 'src/base/entities/vendor.entity';
+import { Sequelize } from 'sequelize-typescript';
 
-@Injectable()
-export class VendorsSeeder implements Seeder {
-  constructor(
-    @InjectModel(Vendor)
-    private readonly vendorModel: typeof Vendor,
-  ) {}
+export async function seedVendors(sequelize: Sequelize): Promise<void> {
+  console.log('🌱 Seeding vendors...');
 
-  async seed(): Promise<any> {
-    const vendors = [
-      { vendorName: 'ACME Corporation' },
-      { vendorName: 'Global Furniture Ltd' },
-      { vendorName: 'Premium Decor Inc' },
-      { vendorName: 'Modern Living Co' },
-      { vendorName: 'Classic Interiors' },
-      { vendorName: 'Urban Design Group' },
-    ];
+  const Vendor = sequelize.models.Vendor;
 
-    return this.vendorModel.bulkCreate(vendors as any, {
-      ignoreDuplicates: true,
-    });
-  }
+  const vendors = [
+    { vendorName: 'ACME Corporation' },
+    { vendorName: 'Global Furniture Ltd' },
+    { vendorName: 'Premium Decor Inc' },
+    { vendorName: 'Modern Living Co' },
+    { vendorName: 'Classic Interiors' },
+    { vendorName: 'Urban Design Group' },
+  ];
 
-  async drop(): Promise<any> {
-    return this.vendorModel.destroy({ where: {}, truncate: true });
-  }
+  await Vendor.bulkCreate(vendors as any, {
+    ignoreDuplicates: true,
+  });
+
+  console.log(`✅ Seeded ${vendors.length} vendors`);
 }

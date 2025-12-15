@@ -1,33 +1,25 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { Seeder } from 'nestjs-seeder';
-import { ItemCategory } from 'src/base/entities/item-category.entity';
+import { Sequelize } from 'sequelize-typescript';
 
-@Injectable()
-export class CategoriesSeeder implements Seeder {
-  constructor(
-    @InjectModel(ItemCategory)
-    private readonly categoryModel: typeof ItemCategory,
-  ) {}
+export async function seedCategories(sequelize: Sequelize): Promise<void> {
+  console.log('🌱 Seeding categories...');
 
-  async seed(): Promise<any> {
-    const categories = [
-      { name: 'Furniture' },
-      { name: 'Lighting' },
-      { name: 'Decor' },
-      { name: 'Textiles' },
-      { name: 'Artwork' },
-      { name: 'Office Equipment' },
-      { name: 'Kitchen & Dining' },
-      { name: 'Outdoor' },
-    ];
+  // Get model from the sequelize instance
+  const ItemCategory = sequelize.models.ItemCategory;
 
-    return this.categoryModel.bulkCreate(categories as any, {
-      ignoreDuplicates: true,
-    });
-  }
+  const categories = [
+    { name: 'Furniture' },
+    { name: 'Lighting' },
+    { name: 'Decor' },
+    { name: 'Textiles' },
+    { name: 'Artwork' },
+    { name: 'Office Equipment' },
+    { name: 'Kitchen & Dining' },
+    { name: 'Outdoor' },
+  ];
 
-  async drop(): Promise<any> {
-    return this.categoryModel.destroy({ where: {}, truncate: true });
-  }
+  await ItemCategory.bulkCreate(categories as any, {
+    ignoreDuplicates: true,
+  });
+
+  console.log(`✅ Seeded ${categories.length} categories`);
 }

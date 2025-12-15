@@ -1,27 +1,77 @@
-import { seeder } from 'nestjs-seeder';
-import { SeederModule } from './seeder.module';
-import { CategoriesSeeder } from './seeder/categories.seeder';
-import { VendorsSeeder } from './seeder/vendors.seeder';
-import { CustomersSeeder } from './seeder/customers.seeder';
-import { ItemsSeeder } from './seeder/items.seeder';
-import { VendorAddressesSeeder } from './seeder/vendor-addresses.seeder';
-import { OrderItemsSeeder } from './seeder/order-items.seeder';
-import { OrderPlanningSeeder } from './seeder/order-planning.seeder';
-import { OrderProductionSeeder } from './seeder/order-production.seeder';
-import { OrderLogisticsSeeder } from './seeder/order-logistics.seeder';
-import { UploadsSeeder } from './seeder/uploads.seeder';
+import { ItemCategory } from 'src/base/entities/item-category.entity';
+import { Item } from 'src/base/entities/item.entity';
+import { Vendor } from 'src/base/entities/vendor.entity';
+import { VendorAddress } from 'src/base/entities/vendor-address.entity';
+import { Customer } from 'src/base/entities/customer.entity';
+import { OrderItem } from 'src/base/entities/order-item.entity';
+import { OrderPlanning } from 'src/base/entities/order-planning.entity';
+import { OrderProduction } from 'src/base/entities/order-production.entity';
+import { OrderLogistics } from 'src/base/entities/order-logistics.entity';
+import { Upload } from 'src/base/entities/upload.entity';
+import { Sequelize } from 'sequelize-typescript';
+import { databaseConfig } from '@config/database.config';
+import { seedCategories } from './seeder/categories.seeder';
+import { seedVendors } from './seeder/vendors.seeder';
+import { seedCustomers } from './seeder/customers.seeder';
+import { seedItems } from './seeder/items.seeder';
+import { seedVendorAddresses } from './seeder/vendor-addresses.seeder';
+import { seedOrderItems } from './seeder/order-items.seeder';
+import { seedOrderPlanning } from './seeder/order-planning.seeder';
+import { seedOrderProduction } from './seeder/order-production.seeder';
+import { seedOrderLogistics } from './seeder/order-logistics.seeder';
+import { seedUploads } from './seeder/uploads.seeder';
 
-seeder({
-  imports: [SeederModule],
-}).run([
-  CategoriesSeeder, // 1. Categories first
-  VendorsSeeder, // 2. Vendors
-  CustomersSeeder, // 3. Customers
-  ItemsSeeder, // 4. Items (depends on Categories)
-  VendorAddressesSeeder, // 5. Vendor Addresses (depends on Vendors)
-  OrderItemsSeeder, // 6. Order Items (depends on Items, Vendors, VendorAddresses, Customers)
-  OrderPlanningSeeder, // 7. Order Planning (depends on OrderItems)
-  OrderProductionSeeder, // 8. Order Production (depends on OrderItems)
-  OrderLogisticsSeeder, // 9. Order Logistics (depends on OrderItems)
-  UploadsSeeder, // 10. Uploads (depends on OrderItems)
-]);
+async function runSeeders() {
+  console.log('🌱 Starting database seeding...\n');
+
+  const sequelize = new Sequelize({
+    ...databaseConfig,
+    models: [
+      ItemCategory,
+      Item,
+      Vendor,
+      VendorAddress,
+      Customer,
+      OrderItem,
+      OrderPlanning,
+      OrderProduction,
+      OrderLogistics,
+      Upload,
+    ],
+  } as any);
+
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Database connection established\n');
+
+    // Initialize models (important!)
+    await sequelize.sync();
+    console.log('✅ Models initialized\n');
+
+    // Debug: Check registered models
+    console.log('📋 Registered models:', Object.keys(sequelize.models));
+    console.log('');
+
+    // Run seeders in order
+    await seedCategories(sequelize as any);
+    await seedVendors(sequelize as any);
+    await seedCustomers(sequelize as any);
+    await seedItems(sequelize as any);
+    await seedVendorAddresses(sequelize as any);
+    await seedOrderItems(sequelize as any);
+    await seedOrderPlanning(sequelize as any);
+    await seedOrderProduction(sequelize as any);
+    await seedOrderLogistics(sequelize as any);
+    await seedUploads(sequelize as any);
+
+    console.log('\n🎉 ✅ All seeders completed successfully!');
+    await sequelize.close();
+  } catch (error) {
+    console.error('\n❌ Seeding failed:', error.message);
+    console.error(error);
+    await sequelize.close();
+    process.exit(1);
+  }
+}
+
+runSeeders();
