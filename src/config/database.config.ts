@@ -10,7 +10,7 @@ export const databaseConfig: SequelizeModuleOptions = {
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'nestjs_db',
   autoLoadModels: true,
-  synchronize: true, // !!!!!! this part must be `false` in the production. for now no need to migrations, we can use this in the dev env.
+  synchronize: false,
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
   pool: {
     max: 20,
