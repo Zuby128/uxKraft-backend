@@ -33,6 +33,8 @@ export class OrderItemsService {
     private readonly vendorAddressModel: typeof VendorAddress,
     @InjectModel(Customer)
     private readonly customerModel: typeof Customer,
+    @InjectModel(Upload)
+    private readonly uploadModel: typeof Upload,
   ) {}
 
   async create(createOrderItemDto: CreateOrderItemDto): Promise<OrderItem> {
@@ -382,5 +384,39 @@ export class OrderItemsService {
 
     await orderItem.restore();
     return this.findOne(id);
+  }
+
+  async uploadFile(
+    orderItemId: number,
+    file: Express.Multer.File,
+  ): Promise<Upload> {
+    const orderItem = await this.findOne(orderItemId);
+    if (!orderItem) {
+      throw new NotFoundException(
+        `Order item with ID ${orderItemId} not found`,
+      );
+    }
+
+    const upload = await this.uploadModel.create({
+      itemId: orderItemId,
+      name: file.originalname,
+      url: `/uploads/${file.filename}`, // Dosya yolu
+    } as any);
+
+    return upload;
+  }
+
+  async getUploadsByOrderItem(orderItemId: number): Promise<Upload[]> {
+    const orderItem = await this.findOne(orderItemId);
+    if (!orderItem) {
+      throw new NotFoundException(
+        `Order item with ID ${orderItemId} not found`,
+      );
+    }
+
+    return this.uploadModel.findAll({
+      where: { itemId: orderItemId },
+      order: [['uploadId', 'DESC']],
+    });
   }
 }

@@ -10,6 +10,8 @@ import {
   HttpCode,
   HttpStatus,
   Query,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,11 +19,15 @@ import {
   ApiResponse,
   ApiParam,
   ApiQuery,
+  ApiBody,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { OrderItemsService } from './order-items.service';
 import { CreateOrderItemDto } from './dto/create-order-item.dto';
 import { UpdateOrderItemDto } from './dto/update-order-item.dto';
 import { FilterOrderItemDto } from './dto/filter-order-item.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { multerConfig } from '@config/multer.config';
 
 @ApiTags('Order Items')
 @Controller('order-items')
@@ -211,5 +217,43 @@ export class OrderItemsController {
   @ApiResponse({ status: 409, description: 'Order item is not deleted' })
   restore(@Param('id', ParseIntPipe) id: number) {
     return this.orderItemsService.restore(id);
+  }
+
+  @Post(':id/upload')
+  @ApiOperation({ summary: 'Upload a file for an order item' })
+  @ApiParam({ name: 'id', description: 'Order item ID' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'File uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid file type or size' })
+  @ApiResponse({ status: 404, description: 'Order item not found' })
+  @UseInterceptors(FileInterceptor('file', multerConfig))
+  uploadFile(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.orderItemsService.uploadFile(id, file);
+  }
+
+  @Get(':id/uploads')
+  @ApiOperation({ summary: 'Get all uploads for an order item' })
+  @ApiParam({ name: 'id', description: 'Order item ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all uploads for the order item',
+  })
+  @ApiResponse({ status: 404, description: 'Order item not found' })
+  getUploads(@Param('id', ParseIntPipe) id: number) {
+    return this.orderItemsService.getUploadsByOrderItem(id);
   }
 }
