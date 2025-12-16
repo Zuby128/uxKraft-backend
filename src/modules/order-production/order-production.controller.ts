@@ -69,6 +69,32 @@ export class OrderProductionController {
     return this.orderProductionService.findOne(id);
   }
 
+  @Patch('bulk-update')
+  @ApiOperation({ summary: 'Bulk update production for multiple order items' })
+  @ApiResponse({
+    status: 200,
+    description: 'Production updated/created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        totalCount: { type: 'number', example: 5 },
+        results: {
+          type: 'array',
+          items: { type: 'object' },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid order item IDs' })
+  @ApiResponse({
+    status: 404,
+    description: 'No order items found with provided IDs',
+  })
+  bulkUpdate(@Body() bulkUpdateDto: BulkUpdateOrderProductionDto) {
+    const { orderItemIds, ...updateData } = bulkUpdateDto;
+    return this.orderProductionService.bulkUpdate(orderItemIds, updateData);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update order production' })
   @ApiParam({ name: 'id', description: 'Production ID' })
@@ -95,31 +121,5 @@ export class OrderProductionController {
   @ApiResponse({ status: 404, description: 'Order production not found' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.orderProductionService.remove(id);
-  }
-
-  @Patch('bulk-update')
-  @ApiOperation({ summary: 'Bulk update production for multiple order items' })
-  @ApiResponse({
-    status: 200,
-    description: 'Production updated/created successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        totalCount: { type: 'number', example: 5 },
-        results: {
-          type: 'array',
-          items: { type: 'object' },
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid order item IDs' })
-  @ApiResponse({
-    status: 404,
-    description: 'No order items found with provided IDs',
-  })
-  bulkUpdate(@Body() bulkUpdateDto: BulkUpdateOrderProductionDto) {
-    const { orderItemIds, ...updateData } = bulkUpdateDto;
-    return this.orderProductionService.bulkUpdate(orderItemIds, updateData);
   }
 }
