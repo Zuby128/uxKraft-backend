@@ -27,7 +27,7 @@ export class BulkUpdateItemDto {
   @IsOptional()
   @IsInt()
   @Min(1)
-  categoryId?: number;
+  categoryId?: number | null;
 
   @ApiPropertyOptional({
     description: 'Location to set for all items',

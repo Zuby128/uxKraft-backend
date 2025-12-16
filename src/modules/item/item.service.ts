@@ -147,7 +147,7 @@ export class ItemService {
   async bulkUpdate(
     itemIds: number[],
     updateData: {
-      categoryId?: number;
+      categoryId?: number | null;
       location?: string;
       shipFrom?: string;
       notes?: string;
@@ -169,7 +169,7 @@ export class ItemService {
       );
     }
 
-    if (updateData.categoryId) {
+    if (updateData?.categoryId) {
       const category = await this.categoryModel.findByPk(updateData.categoryId);
       if (!category) {
         throw new BadRequestException(
@@ -179,7 +179,7 @@ export class ItemService {
     }
 
     try {
-      const [updatedCount] = await this.itemModel.update(updateData, {
+      const [updatedCount] = await this.itemModel.update(updateData as any, {
         where: { itemId: itemIds },
       });
 
