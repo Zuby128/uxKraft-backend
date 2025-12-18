@@ -117,37 +117,37 @@ async function seed() {
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Furniture') as category_id,
                'Premium Leather Sofa' as item_name, 'SOFA-001' as spec_no,
                150000 as unit_price, 20 as markup_percentage,
-               NULL as unit_type,
+               'unit' as unit_type,
                'Warehouse A' as location, 'New York' as ship_from
         UNION ALL
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Furniture'),
                'Executive Office Chair', 'CHAIR-001', 45000, 25,
-               NULL,
+               'unit',
                'Warehouse A', 'Chicago'
         UNION ALL
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Furniture'),
                'Conference Table', 'TABLE-001', 280000, 15,
-               NULL,
+               'unit',
                'Warehouse B', 'New York'
         UNION ALL
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Lighting'),
                'Crystal Chandelier', 'LAMP-001', 95000, 30,
-               NULL,
+               'unit',
                'Warehouse C', 'LA'
         UNION ALL
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Lighting'),
                'LED Desk Lamp', 'LAMP-002', 8000, 40,
-               NULL,
+               'unit',
                'Warehouse A', 'Chicago'
         UNION ALL
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Decor'),
                'Modern Wall Art', 'DECOR-001', 35000, 50,
-               NULL,
+               'unit',
                'Warehouse B', 'New York'
         UNION ALL
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Decor'),
                'Ceramic Floor Vase', 'VASE-001', 12000, 35,
-               NULL,
+               'unit',
                'Warehouse C', 'LA'
         UNION ALL
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Textiles'),
@@ -157,7 +157,7 @@ async function seed() {
         UNION ALL
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Textiles'),
                'Persian Area Rug', 'RUG-001', 450000, 20,
-               NULL,
+               'unit',
                'Warehouse B', 'New York'
       ) as seed_data
       ON CONFLICT DO NOTHING;
