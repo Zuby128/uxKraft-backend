@@ -162,18 +162,16 @@ async function seed() {
         console.log('🌱 Seeding order items...');
         await sequelize.query(`
       INSERT INTO order_items (
-        item_id, quantity, vendor_id, vendor_address_id, ship_to,
-        phase, total_price
+        item_id, quantity, vendor_id, ship_to, phase, total_price
       )
       SELECT 
-        i.item_id, quantity, v.vendor_id, va.vendor_address_id, c.customer_id,
+        i.item_id, quantity, v.vendor_id, c.customer_id,
         phase, (i.total_price * quantity)::integer as total_price
       FROM (
         SELECT 
           (SELECT item_id FROM items WHERE item_name = 'Modern Sofa') as item_id,
           15 as quantity,
           (SELECT vendor_id FROM vendors WHERE vendor_name = 'ACME Corporation') as vendor_id,
-          (SELECT vendor_address_id FROM vendor_addresses WHERE address LIKE '%New York%' LIMIT 1) as vendor_address_id,
           (SELECT customer_id FROM customers WHERE name = 'Hotel California') as customer_id,
           3 as phase
         UNION ALL
@@ -181,7 +179,6 @@ async function seed() {
           (SELECT item_id FROM items WHERE item_name = 'Office Chair'),
           50,
           (SELECT vendor_id FROM vendors WHERE vendor_name = 'Global Furniture Ltd'),
-          (SELECT vendor_address_id FROM vendor_addresses WHERE address LIKE '%Chicago%' LIMIT 1),
           (SELECT customer_id FROM customers WHERE name = 'Downtown Business Center'),
           2
         UNION ALL
@@ -189,13 +186,11 @@ async function seed() {
           (SELECT item_id FROM items WHERE item_name = 'LED Ceiling Light'),
           30,
           (SELECT vendor_id FROM vendors WHERE vendor_name = 'Modern Living Co'),
-          (SELECT vendor_address_id FROM vendor_addresses WHERE address LIKE '%San Francisco%' LIMIT 1),
           (SELECT customer_id FROM customers WHERE name = 'Grand Resort & Spa'),
           1
       ) as orders
       JOIN items i ON orders.item_id = i.item_id
       JOIN vendors v ON orders.vendor_id = v.vendor_id
-      JOIN vendor_addresses va ON orders.vendor_address_id = va.vendor_address_id
       JOIN customers c ON orders.customer_id = c.customer_id
       ON CONFLICT DO NOTHING;
     `);
