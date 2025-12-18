@@ -26,6 +26,6 @@
       "@database/*": ["src/database/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "seed.js"],
   "exclude": ["node_modules", "dist", "test"]
 }
