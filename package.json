@@ -22,7 +22,7 @@
     "db:create": "ts-node -r tsconfig-paths/register src/database/create-database.ts",
     "db:migrate": "ts-node -r tsconfig-paths/register src/database/migrate.ts",
     "db:setup": "ts-node -r tsconfig-paths/register src/database/setup.ts",
-    "seed": "ts-node -r tsconfig-paths/register src/database/seed.ts",
+    "seed": "node seed.js",
     "migration:generate": "sequelize-cli migration:generate --name",
     "migration:run": "sequelize-cli db:migrate",
     "migration:revert": "sequelize-cli db:migrate:undo",
