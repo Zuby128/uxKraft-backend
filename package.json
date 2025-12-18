@@ -24,8 +24,7 @@
     "seed": "ts-node -r tsconfig-paths/register src/database/seed.ts",
     "migration:generate": "sequelize-cli migration:generate --name",
     "migration:run": "sequelize-cli db:migrate",
-    "migration:revert": "sequelize-cli db:migrate:undo",
-    "migrate": "node dist/database/migrate.js"
+    "migration:revert": "sequelize-cli db:migrate:undo"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
