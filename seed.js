@@ -1,39 +1,5 @@
 const { Sequelize } = require('sequelize-typescript');
 
-async function runSeeders(sequelize) {
-    // Seeder fonksiyonlarını import et
-    const { seedCategories } = require('./dist/database/seeders/categories.seeder');
-    const { seedVendors } = require('./dist/database/seeders/vendors.seeder');
-    const { seedCustomers } = require('./dist/database/seeders/customers.seeder');
-    const { seedItems } = require('./dist/database/seeders/items.seeder');
-    const { seedVendorAddresses } = require('./dist/database/seeders/vendor-addresses.seeder');
-    const { seedOrderItems } = require('./dist/database/seeders/order-items.seeder');
-    const { seedOrderPlanning } = require('./dist/database/seeders/order-planning.seeder');
-    const { seedOrderProduction } = require('./dist/database/seeders/order-production.seeder');
-    const { seedOrderLogistics } = require('./dist/database/seeders/order-logistics.seeder');
-    const { seedUploads } = require('./dist/database/seeders/uploads.seeder');
-
-    console.log('🌱 Starting seeding...\n');
-
-    try {
-        await seedCategories(sequelize);
-        await seedVendors(sequelize);
-        await seedCustomers(sequelize);
-        await seedItems(sequelize);
-        await seedVendorAddresses(sequelize);
-        await seedOrderItems(sequelize);
-        await seedOrderPlanning(sequelize);
-        await seedOrderProduction(sequelize);
-        await seedOrderLogistics(sequelize);
-        await seedUploads(sequelize);
-
-        console.log('\n🎉 ✅ All seeders completed successfully!');
-    } catch (error) {
-        console.error('\n❌ Seeding failed:', error);
-        throw error;
-    }
-}
-
 async function seed() {
     const databaseUrl = process.env.DATABASE_URL;
 
@@ -58,34 +24,65 @@ async function seed() {
                     rejectUnauthorized: false,
                 },
             },
-            logging: false,
+            logging: console.log,
         });
-
-        // Import models from dist
-        const models = [
-            require('./dist/modules/categories/entities/item-category.entity').ItemCategory,
-            require('./dist/modules/items/entities/item.entity').Item,
-            require('./dist/modules/vendors/entities/vendor.entity').Vendor,
-            require('./dist/modules/vendors/entities/vendor-address.entity').VendorAddress,
-            require('./dist/modules/customers/entities/customer.entity').Customer,
-            require('./dist/modules/order-items/entities/order-item.entity').OrderItem,
-            require('./dist/modules/order-planning/entities/order-planning.entity').OrderPlanning,
-            require('./dist/modules/order-production/entities/order-production.entity').OrderProduction,
-            require('./dist/modules/order-logistics/entities/order-logistics.entity').OrderLogistics,
-            require('./dist/modules/uploads/entities/upload.entity').Upload,
-        ];
-
-        sequelize.addModels(models);
 
         await sequelize.authenticate();
         console.log('✅ Database connected\n');
 
-        await runSeeders(sequelize);
+        // Categories
+        console.log('🌱 Seeding categories...');
+        await sequelize.query(`
+      INSERT INTO item_categories (name, created_at, updated_at) 
+      VALUES 
+        ('Furniture', NOW(), NOW()),
+        ('Lighting', NOW(), NOW()),
+        ('Decor', NOW(), NOW()),
+        ('Textiles', NOW(), NOW()),
+        ('Artwork', NOW(), NOW()),
+        ('Office Equipment', NOW(), NOW()),
+        ('Kitchen & Dining', NOW(), NOW()),
+        ('Outdoor', NOW(), NOW())
+      ON CONFLICT (name) DO NOTHING;
+    `);
+        console.log('✅ Seeded categories\n');
+
+        // Vendors
+        console.log('🌱 Seeding vendors...');
+        await sequelize.query(`
+      INSERT INTO vendors (vendor_name, created_at, updated_at) 
+      VALUES 
+        ('ACME Corporation', NOW(), NOW()),
+        ('Global Furniture Ltd', NOW(), NOW()),
+        ('Premium Decor Inc', NOW(), NOW()),
+        ('Modern Living Co', NOW(), NOW()),
+        ('Classic Interiors', NOW(), NOW()),
+        ('Urban Design Group', NOW(), NOW())
+      ON CONFLICT (vendor_name) DO NOTHING;
+    `);
+        console.log('✅ Seeded vendors\n');
+
+        // Customers
+        console.log('🌱 Seeding customers...');
+        await sequelize.query(`
+      INSERT INTO customers (name, address, created_at, updated_at) 
+      VALUES 
+        ('Hotel California', '1 Beach Road, Los Angeles, CA 90001', NOW(), NOW()),
+        ('Grand Resort & Spa', '200 Ocean Drive, Miami, FL 33139', NOW(), NOW()),
+        ('Downtown Business Center', '500 5th Avenue, New York, NY 10110', NOW(), NOW()),
+        ('Luxury Suites Hotel', '100 Park Lane, Chicago, IL 60601', NOW(), NOW()),
+        ('Seaside Inn', '75 Coastal Highway, San Diego, CA 92101', NOW(), NOW())
+      ON CONFLICT DO NOTHING;
+    `);
+        console.log('✅ Seeded customers\n');
+
+        console.log('🎉 ✅ Basic seed data completed successfully!');
+        console.log('📝 Note: Items, orders, and relations can be added via API\n');
 
         await sequelize.close();
         process.exit(0);
     } catch (error) {
-        console.error('❌ Seed failed:', error);
+        console.error('❌ Seed failed:', error.message);
         process.exit(1);
     }
 }
