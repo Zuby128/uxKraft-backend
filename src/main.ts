@@ -1,3 +1,5 @@
+import { config } from 'dotenv';
+config();
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
@@ -113,7 +115,7 @@ async function bootstrap() {
   });
 
   const configService = app.get(ConfigService);
-  const port = configService.get<number>('port') || 3000;
+  const port = process.env.PORT || 3000;
 
   await app.listen(port, '0.0.0.0');
 
