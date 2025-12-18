@@ -172,16 +172,16 @@ async function seed() {
         phase, unit_price, markup_percentage, total_price
       )
       SELECT 
-        item_id, quantity, vendor_id, vendor_address_id, ship_to,
+        item_id, quantity, vendor_id, address_id, ship_to,
         phase, unit_price, markup_percentage, total_price
       FROM (
         SELECT 
           (SELECT item_id FROM items WHERE spec_no = 'SOFA-001') as item_id,
           15 as quantity,
           (SELECT vendor_id FROM vendors WHERE vendor_name = 'ACME Corporation') as vendor_id,
-          (SELECT vendor_address_id FROM vendor_addresses 
+          (SELECT address_id FROM vendor_addresses 
            WHERE vendor_id = (SELECT vendor_id FROM vendors WHERE vendor_name = 'ACME Corporation')
-           AND title = 'Main Office') as vendor_address_id,
+           AND title = 'Main Office') as address_id,
           (SELECT id FROM customers WHERE name = 'Hotel California') as ship_to,
           1 as phase,
           150000 as unit_price,
@@ -192,7 +192,7 @@ async function seed() {
           (SELECT item_id FROM items WHERE spec_no = 'CHAIR-001'),
           30,
           (SELECT vendor_id FROM vendors WHERE vendor_name = 'ACME Corporation'),
-          (SELECT vendor_address_id FROM vendor_addresses 
+          (SELECT address_id FROM vendor_addresses 
            WHERE vendor_id = (SELECT vendor_id FROM vendors WHERE vendor_name = 'ACME Corporation')
            AND title = 'Main Office'),
           (SELECT id FROM customers WHERE name = 'Hotel California'),
@@ -205,7 +205,7 @@ async function seed() {
           (SELECT item_id FROM items WHERE spec_no = 'SOFA-001'),
           20,
           (SELECT vendor_id FROM vendors WHERE vendor_name = 'ACME Corporation'),
-          (SELECT vendor_address_id FROM vendor_addresses 
+          (SELECT address_id FROM vendor_addresses 
            WHERE vendor_id = (SELECT vendor_id FROM vendors WHERE vendor_name = 'ACME Corporation')
            AND title = 'Main Office'),
           (SELECT id FROM customers WHERE name = 'Grand Resort & Spa'),
