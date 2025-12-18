@@ -33,16 +33,16 @@ async function seed() {
         // 1. Categories
         console.log('🌱 Seeding categories...');
         await sequelize.query(`
-      INSERT INTO item_categories (name, created_at, updated_at) 
+      INSERT INTO item_categories (name) 
       VALUES 
-        ('Furniture', NOW(), NOW()),
-        ('Lighting', NOW(), NOW()),
-        ('Decor', NOW(), NOW()),
-        ('Textiles', NOW(), NOW()),
-        ('Artwork', NOW(), NOW()),
-        ('Office Equipment', NOW(), NOW()),
-        ('Kitchen & Dining', NOW(), NOW()),
-        ('Outdoor', NOW(), NOW())
+        ('Furniture'),
+        ('Lighting'),
+        ('Decor'),
+        ('Textiles'),
+        ('Artwork'),
+        ('Office Equipment'),
+        ('Kitchen & Dining'),
+        ('Outdoor')
       ON CONFLICT (name) DO NOTHING;
     `);
         console.log('✅ Seeded 8 categories\n');
@@ -50,14 +50,14 @@ async function seed() {
         // 2. Vendors
         console.log('🌱 Seeding vendors...');
         await sequelize.query(`
-      INSERT INTO vendors (vendor_name, created_at, updated_at) 
+      INSERT INTO vendors (vendor_name) 
       VALUES 
-        ('ACME Corporation', NOW(), NOW()),
-        ('Global Furniture Ltd', NOW(), NOW()),
-        ('Premium Decor Inc', NOW(), NOW()),
-        ('Modern Living Co', NOW(), NOW()),
-        ('Classic Interiors', NOW(), NOW()),
-        ('Urban Design Group', NOW(), NOW())
+        ('ACME Corporation'),
+        ('Global Furniture Ltd'),
+        ('Premium Decor Inc'),
+        ('Modern Living Co'),
+        ('Classic Interiors'),
+        ('Urban Design Group')
       ON CONFLICT (vendor_name) DO NOTHING;
     `);
         console.log('✅ Seeded 6 vendors\n');
@@ -65,13 +65,13 @@ async function seed() {
         // 3. Customers
         console.log('🌱 Seeding customers...');
         await sequelize.query(`
-      INSERT INTO customers (name, address, created_at, updated_at) 
+      INSERT INTO customers (name, address) 
       VALUES 
-        ('Hotel California', '1 Beach Road, Los Angeles, CA 90001', NOW(), NOW()),
-        ('Grand Resort & Spa', '200 Ocean Drive, Miami, FL 33139', NOW(), NOW()),
-        ('Downtown Business Center', '500 5th Avenue, New York, NY 10110', NOW(), NOW()),
-        ('Luxury Suites Hotel', '100 Park Lane, Chicago, IL 60601', NOW(), NOW()),
-        ('Seaside Inn', '75 Coastal Highway, San Diego, CA 92101', NOW(), NOW())
+        ('Hotel California', '1 Beach Road, Los Angeles, CA 90001'),
+        ('Grand Resort & Spa', '200 Ocean Drive, Miami, FL 33139'),
+        ('Downtown Business Center', '500 5th Avenue, New York, NY 10110'),
+        ('Luxury Suites Hotel', '100 Park Lane, Chicago, IL 60601'),
+        ('Seaside Inn', '75 Coastal Highway, San Diego, CA 92101')
       ON CONFLICT DO NOTHING;
     `);
         console.log('✅ Seeded 5 customers\n');
@@ -81,12 +81,12 @@ async function seed() {
         await sequelize.query(`
       INSERT INTO items (
         category_id, item_name, spec_no, unit, unit_price, markup_percentage, 
-        total_price, location, ship_from, notes, created_at, updated_at
+        total_price, location, ship_from, notes
       )
       SELECT 
         c.category_id, item_name, spec_no, unit, unit_price, markup_percentage,
         (unit_price * (1 + markup_percentage / 100.0))::integer as total_price,
-        location, ship_from, notes, NOW(), NOW()
+        location, ship_from, notes
       FROM (
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Furniture') as category_id,
                'Modern Sofa' as item_name, 'SF-2024-001' as spec_no, 'piece' as unit,
@@ -133,8 +133,8 @@ async function seed() {
         // 5. Vendor Addresses
         console.log('🌱 Seeding vendor addresses...');
         await sequelize.query(`
-      INSERT INTO vendor_addresses (vendor_id, address, created_at, updated_at)
-      SELECT v.vendor_id, address, NOW(), NOW()
+      INSERT INTO vendor_addresses (vendor_id, address)
+      SELECT v.vendor_id, address
       FROM (
         SELECT (SELECT vendor_id FROM vendors WHERE vendor_name = 'ACME Corporation') as vendor_id,
                '123 Business Park, New York, NY 10001' as address
@@ -163,12 +163,11 @@ async function seed() {
         await sequelize.query(`
       INSERT INTO order_items (
         item_id, quantity, vendor_id, vendor_address_id, ship_to,
-        phase, total_price, created_at, updated_at
+        phase, total_price
       )
       SELECT 
         i.item_id, quantity, v.vendor_id, va.vendor_address_id, c.customer_id,
-        phase, (i.total_price * quantity)::integer as total_price,
-        NOW(), NOW()
+        phase, (i.total_price * quantity)::integer as total_price
       FROM (
         SELECT 
           (SELECT item_id FROM items WHERE item_name = 'Modern Sofa') as item_id,
@@ -207,15 +206,14 @@ async function seed() {
         await sequelize.query(`
       INSERT INTO order_planning (
         order_item_id, sample_approved_date, pi_send_date, pi_approved_date,
-        initial_payment_date, created_at, updated_at
+        initial_payment_date
       )
       SELECT 
         oi.order_item_id,
         NOW() - INTERVAL '30 days' as sample_approved_date,
         NOW() - INTERVAL '25 days' as pi_send_date,
         NOW() - INTERVAL '20 days' as pi_approved_date,
-        NOW() - INTERVAL '15 days' as initial_payment_date,
-        NOW(), NOW()
+        NOW() - INTERVAL '15 days' as initial_payment_date
       FROM order_items oi
       WHERE oi.phase >= 1
       LIMIT 3
@@ -227,15 +225,13 @@ async function seed() {
         console.log('🌱 Seeding order production...');
         await sequelize.query(`
       INSERT INTO order_production (
-        order_item_id, cfa_shops_send, cfa_shops_approved, cfa_shops_delivered,
-        created_at, updated_at
+        order_item_id, cfa_shops_send, cfa_shops_approved, cfa_shops_delivered
       )
       SELECT 
         oi.order_item_id,
         NOW() - INTERVAL '10 days' as cfa_shops_send,
         NOW() - INTERVAL '7 days' as cfa_shops_approved,
-        NOW() - INTERVAL '3 days' as cfa_shops_delivered,
-        NOW(), NOW()
+        NOW() - INTERVAL '3 days' as cfa_shops_delivered
       FROM order_items oi
       WHERE oi.phase >= 2
       LIMIT 2
@@ -247,16 +243,14 @@ async function seed() {
         console.log('🌱 Seeding order logistics...');
         await sequelize.query(`
       INSERT INTO order_logistics (
-        order_item_id, ordered_date, shipped_date, delivered_date, shipping_notes,
-        created_at, updated_at
+        order_item_id, ordered_date, shipped_date, delivered_date, shipping_notes
       )
       SELECT 
         oi.order_item_id,
         NOW() - INTERVAL '5 days' as ordered_date,
         NOW() - INTERVAL '2 days' as shipped_date,
         NULL as delivered_date,
-        'Express shipping requested' as shipping_notes,
-        NOW(), NOW()
+        'Express shipping requested' as shipping_notes
       FROM order_items oi
       WHERE oi.phase >= 3
       LIMIT 1
