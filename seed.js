@@ -258,7 +258,10 @@ async function seed() {
             FROM (
                 SELECT 
                     (SELECT vendor_id FROM vendors WHERE vendor_name = 'ACME Corporation') as vendor_id,
-                    (SELECT id FROM vendor_addresses WHERE title = 'Main Office' LIMIT 1) as vendor_address,
+                    (SELECT id FROM vendor_addresses 
+                     WHERE title = 'Main Office' 
+                     AND vendor_id = (SELECT vendor_id FROM vendors WHERE vendor_name = 'ACME Corporation')
+                     LIMIT 1) as vendor_address,
                     (SELECT item_id FROM items WHERE spec_no = 'SOFA-001') as item_id,
                     15 as quantity,
                     150000 as unit_price,
@@ -269,7 +272,10 @@ async function seed() {
                 UNION ALL
                 SELECT 
                     (SELECT vendor_id FROM vendors WHERE vendor_name = 'ACME Corporation'),
-                    (SELECT id FROM vendor_addresses WHERE title = 'Main Office' LIMIT 1),
+                    (SELECT id FROM vendor_addresses 
+                     WHERE title = 'Main Office' 
+                     AND vendor_id = (SELECT vendor_id FROM vendors WHERE vendor_name = 'ACME Corporation')
+                     LIMIT 1),
                     (SELECT item_id FROM items WHERE spec_no = 'CHAIR-001'),
                     30,
                     45000,
@@ -280,7 +286,10 @@ async function seed() {
                 UNION ALL
                 SELECT 
                     (SELECT vendor_id FROM vendors WHERE vendor_name = 'ACME Corporation'),
-                    (SELECT id FROM vendor_addresses WHERE title = 'Main Office' LIMIT 1),
+                    (SELECT id FROM vendor_addresses 
+                     WHERE title = 'Main Office' 
+                     AND vendor_id = (SELECT vendor_id FROM vendors WHERE vendor_name = 'ACME Corporation')
+                     LIMIT 1),
                     (SELECT item_id FROM items WHERE spec_no = 'SOFA-001'),
                     20,
                     150000,
