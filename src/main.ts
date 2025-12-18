@@ -73,17 +73,18 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: [
-      'https://ux-kraft-frontend.vercel.app/',
-      'http://localhost:8100',
-      'http://localhost:4200',
-      'http://localhost:5173',
-      'http://localhost',
-      'https://localhost',
-    ],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    origin: '*',
+    // origin: [
+    //   'https://ux-kraft-frontend.vercel.app/',
+    //   'http://localhost:8100',
+    //   'http://localhost:4200',
+    //   'http://localhost:5173',
+    //   'http://localhost',
+    //   'https://localhost',
+    // ],
+    // credentials: true,
+    // methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    // allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
 
   const config = new DocumentBuilder()
