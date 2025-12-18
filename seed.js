@@ -158,41 +158,55 @@ async function seed() {
     `);
         console.log('✅ Seeded 6 vendor addresses\n');
 
-        // 6. Order Items (using correct column names)
+        // 6. Order Items
         console.log('🌱 Seeding order items...');
         await sequelize.query(`
       INSERT INTO order_items (
-        item_id, vendor_id, vendor_address, ship_to, phase, unit_price, total_price
+        item_id, quantity, vendor_id, vendor_address, ship_to, 
+        phase, unit_price, markup_percentage, total_price
       )
       SELECT 
-        item_id, vendor_id, vendor_address, ship_to, phase, unit_price, total_price
+        item_id, quantity, vendor_id, vendor_address_id, ship_to,
+        phase, unit_price, markup_percentage, total_price
       FROM (
         SELECT 
           (SELECT item_id FROM items WHERE item_name = 'Modern Sofa') as item_id,
+          15 as quantity,
           (SELECT vendor_id FROM vendors WHERE vendor_name = 'ACME Corporation') as vendor_id,
-          '123 Business Park, New York, NY 10001' as vendor_address,
+          (SELECT vendor_address_id FROM vendor_addresses 
+           WHERE vendor_id = (SELECT vendor_id FROM vendors WHERE vendor_name = 'ACME Corporation') 
+           LIMIT 1) as vendor_address_id,
           (SELECT id FROM customers WHERE name = 'Hotel California') as ship_to,
           3 as phase,
-          150000 as unit_price,
-          2700000 as total_price
+          180000 as unit_price,
+          20 as markup_percentage,
+          (180000 * 1.20 * 15)::integer as total_price
         UNION ALL
         SELECT 
           (SELECT item_id FROM items WHERE item_name = 'Office Chair'),
+          50,
           (SELECT vendor_id FROM vendors WHERE vendor_name = 'Global Furniture Ltd'),
-          '789 Trade Center, Chicago, IL 60601',
+          (SELECT vendor_address_id FROM vendor_addresses 
+           WHERE vendor_id = (SELECT vendor_id FROM vendors WHERE vendor_name = 'Global Furniture Ltd') 
+           LIMIT 1),
           (SELECT id FROM customers WHERE name = 'Downtown Business Center'),
           2,
-          75000,
-          3750000
+          93750 as unit_price,
+          25 as markup_percentage,
+          (93750 * 1.25 * 50)::integer as total_price
         UNION ALL
         SELECT 
           (SELECT item_id FROM items WHERE item_name = 'LED Ceiling Light'),
+          30,
           (SELECT vendor_id FROM vendors WHERE vendor_name = 'Modern Living Co'),
-          '654 Innovation Hub, San Francisco, CA 94102',
+          (SELECT vendor_address_id FROM vendor_addresses 
+           WHERE vendor_id = (SELECT vendor_id FROM vendors WHERE vendor_name = 'Modern Living Co') 
+           LIMIT 1),
           (SELECT id FROM customers WHERE name = 'Grand Resort & Spa'),
           1,
-          35000,
-          1050000
+          45500 as unit_price,
+          30 as markup_percentage,
+          (45500 * 1.30 * 30)::integer as total_price
       ) as seed_data
       ON CONFLICT DO NOTHING;
     `);
@@ -275,8 +289,10 @@ async function seed() {
         console.log('   - 5 Customers');
         console.log('   - 9 Items');
         console.log('   - 6 Vendor Addresses');
-        console.log('   - 3 Order Items');
-        console.log('   - Order Planning, Production, Logistics');
+        console.log('   - 3 Order Items (with proper FKs)');
+        console.log('   - 3 Order Planning records');
+        console.log('   - 2 Order Production records');
+        console.log('   - 1 Order Logistics record');
         console.log('   - 3 Upload records\n');
 
         await sequelize.close();
