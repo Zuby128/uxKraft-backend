@@ -4,7 +4,62 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 
+async function runMigrations() {
+  try {
+    const { Sequelize } = await import('sequelize-typescript');
+    const { databaseConfig } = await import('./config/database.config');
+
+    // Import all models
+    const { ItemCategory } =
+      await import('./base/entities/item-category.entity');
+    const { Item } = await import('./base/entities/item.entity');
+    const { Vendor } = await import('./base/entities/vendor.entity');
+    const { VendorAddress } =
+      await import('./base/entities/vendor-address.entity');
+    const { Customer } = await import('./base/entities/customer.entity');
+    const { OrderItem } = await import('./base/entities/order-item.entity');
+    const { OrderPlanning } =
+      await import('./base/entities/order-planning.entity');
+    const { OrderProduction } =
+      await import('./base/entities/order-production.entity');
+    const { OrderLogistics } =
+      await import('./base/entities/order-logistics.entity');
+    const { Upload } = await import('./base/entities/upload.entity');
+
+    const sequelize = new Sequelize({
+      ...databaseConfig,
+      models: [
+        ItemCategory,
+        Item,
+        Vendor,
+        VendorAddress,
+        Customer,
+        OrderItem,
+        OrderPlanning,
+        OrderProduction,
+        OrderLogistics,
+        Upload,
+      ],
+    } as any);
+
+    await sequelize.authenticate();
+    console.log('✅ Database connected');
+
+    await sequelize.sync({ alter: true });
+    console.log('✅ Database migrated');
+
+    await sequelize.close();
+  } catch (error) {
+    console.error('❌ Migration failed:', error);
+    // Don't exit, let app start anyway
+  }
+}
+
 async function bootstrap() {
+  if (process.env.NODE_ENV === 'production') {
+    await runMigrations();
+  }
+
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalPipes(
