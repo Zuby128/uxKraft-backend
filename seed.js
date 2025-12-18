@@ -80,50 +80,50 @@ async function seed() {
         console.log('🌱 Seeding items...');
         await sequelize.query(`
       INSERT INTO items (
-        category_id, item_name, spec_no, unit, unit_price, markup_percentage, 
+        category_id, item_name, spec_no, unit_price, markup_percentage, 
         total_price, location, ship_from, notes
       )
       SELECT 
-        c.category_id, item_name, spec_no, unit, unit_price, markup_percentage,
+        c.category_id, item_name, spec_no, unit_price, markup_percentage,
         (unit_price * (1 + markup_percentage / 100.0))::integer as total_price,
         location, ship_from, notes
       FROM (
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Furniture') as category_id,
-               'Modern Sofa' as item_name, 'SF-2024-001' as spec_no, 'piece' as unit,
+               'Modern Sofa' as item_name, 'SF-2024-001' as spec_no,
                150000 as unit_price, 20 as markup_percentage,
                'Warehouse A' as location, 'Factory 1' as ship_from, 
                'Premium leather, 3-seater' as notes
         UNION ALL
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Furniture'),
-               'Office Chair', 'OC-2024-002', 'piece', 75000, 25,
+               'Office Chair', 'OC-2024-002', 75000, 25,
                'Warehouse B', 'Factory 2', 'Ergonomic, adjustable height'
         UNION ALL
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Lighting'),
-               'LED Ceiling Light', 'CL-2024-003', 'piece', 35000, 30,
+               'LED Ceiling Light', 'CL-2024-003', 35000, 30,
                'Warehouse A', 'Factory 3', 'Energy efficient, dimmable'
         UNION ALL
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Decor'),
-               'Wall Art Canvas', 'WA-2024-004', 'piece', 25000, 40,
+               'Wall Art Canvas', 'WA-2024-004', 25000, 40,
                'Warehouse C', 'Studio 1', 'Abstract design, 60x80cm'
         UNION ALL
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Textiles'),
-               'Luxury Curtain', 'LC-2024-005', 'meter', 12000, 35,
+               'Luxury Curtain', 'LC-2024-005', 12000, 35,
                'Warehouse B', 'Factory 4', 'Blackout fabric, custom length'
         UNION ALL
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Office Equipment'),
-               'Standing Desk', 'SD-2024-006', 'piece', 95000, 22,
+               'Standing Desk', 'SD-2024-006', 95000, 22,
                'Warehouse A', 'Factory 2', 'Electric adjustable, 120x60cm'
         UNION ALL
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Kitchen & Dining'),
-               'Dining Table Set', 'DT-2024-007', 'set', 200000, 18,
+               'Dining Table Set', 'DT-2024-007', 200000, 18,
                'Warehouse C', 'Factory 1', 'Solid wood, seats 6'
         UNION ALL
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Outdoor'),
-               'Patio Lounge Chair', 'PL-2024-008', 'piece', 55000, 28,
+               'Patio Lounge Chair', 'PL-2024-008', 55000, 28,
                'Warehouse B', 'Factory 5', 'Weather resistant, reclining'
         UNION ALL
         SELECT (SELECT category_id FROM item_categories WHERE name = 'Lighting'),
-               'Table Lamp', 'TL-2024-009', 'piece', 18000, 35,
+               'Table Lamp', 'TL-2024-009', 18000, 35,
                'Warehouse A', 'Factory 3', 'Modern design, touch control'
       ) as c
       ON CONFLICT DO NOTHING;
