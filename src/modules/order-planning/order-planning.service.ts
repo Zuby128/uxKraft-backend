@@ -6,48 +6,45 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { CreationAttributes } from 'sequelize';
-import { OrderPlanning } from 'src/base/entities/order-planning.entity';
-import { OrderItem } from 'src/base/entities/order-item.entity';
 import { CreateOrderPlanningDto } from './dto/create-order-planning.dto';
 import { UpdateOrderPlanningDto } from './dto/update-order-planning.dto';
+import { OrderPlanning } from 'src/base/entities/order-planning.entity';
+import { Item } from 'src/base/entities/item.entity';
 
 @Injectable()
 export class OrderPlanningService {
   constructor(
     @InjectModel(OrderPlanning)
     private readonly orderPlanningModel: typeof OrderPlanning,
-    @InjectModel(OrderItem)
-    private readonly orderItemModel: typeof OrderItem,
+    @InjectModel(Item)
+    private readonly itemModel: typeof Item,
   ) {}
 
   async create(
     createOrderPlanningDto: CreateOrderPlanningDto,
   ): Promise<OrderPlanning> {
-    // Verify order item exists
-    const orderItem = await this.orderItemModel.findByPk(
-      createOrderPlanningDto.orderItemId,
-    );
-    if (!orderItem) {
+    // Verify item exists
+    const item = await this.itemModel.findByPk(createOrderPlanningDto.itemId);
+    if (!item) {
       throw new BadRequestException(
-        `Order item with ID ${createOrderPlanningDto.orderItemId} not found`,
+        `Item with ID ${createOrderPlanningDto.itemId} not found`,
       );
     }
 
-    // Check if planning already exists for this order item (one-to-one)
+    // Check if planning already exists for this item (one-to-one)
     const existingPlanning = await this.orderPlanningModel.findOne({
-      where: { orderItemId: createOrderPlanningDto.orderItemId },
+      where: { itemId: createOrderPlanningDto.itemId },
     });
 
     if (existingPlanning) {
       throw new ConflictException(
-        `Planning already exists for order item ID ${createOrderPlanningDto.orderItemId}`,
+        `Planning already exists for item ID ${createOrderPlanningDto.itemId}`,
       );
     }
 
     try {
       const planning = await this.orderPlanningModel.create(
-        createOrderPlanningDto as unknown as CreationAttributes<OrderPlanning>,
+        createOrderPlanningDto as any,
       );
       return this.findOne(planning.planningId);
     } catch (error) {
@@ -57,14 +54,14 @@ export class OrderPlanningService {
 
   async findAll(): Promise<OrderPlanning[]> {
     return this.orderPlanningModel.findAll({
-      include: [OrderItem],
+      include: [Item],
       order: [['planningId', 'DESC']],
     });
   }
 
   async findOne(id: number): Promise<OrderPlanning> {
     const planning = await this.orderPlanningModel.findByPk(id, {
-      include: [OrderItem],
+      include: [Item],
     });
 
     if (!planning) {
@@ -74,22 +71,20 @@ export class OrderPlanningService {
     return planning;
   }
 
-  async findByOrderItem(orderItemId: number): Promise<OrderPlanning> {
-    const orderItem = await this.orderItemModel.findByPk(orderItemId);
-    if (!orderItem) {
-      throw new NotFoundException(
-        `Order item with ID ${orderItemId} not found`,
-      );
+  async findByItem(itemId: number): Promise<OrderPlanning> {
+    const item = await this.itemModel.findByPk(itemId);
+    if (!item) {
+      throw new NotFoundException(`Item with ID ${itemId} not found`);
     }
 
     const planning = await this.orderPlanningModel.findOne({
-      where: { orderItemId },
-      include: [OrderItem],
+      where: { itemId },
+      include: [Item],
     });
 
     if (!planning) {
       throw new NotFoundException(
-        `Order planning for order item ID ${orderItemId} not found`,
+        `Order planning for item ID ${itemId} not found`,
       );
     }
 
@@ -112,52 +107,57 @@ export class OrderPlanningService {
 
   async remove(id: number): Promise<void> {
     const planning = await this.findOne(id);
-    await planning.destroy(); // Hard delete (no soft delete for planning)
+    await planning.destroy();
   }
 
   async bulkUpdate(
-    orderItemIds: number[],
+    itemIds: number[],
     updateData: {
-      poApprovalDate?: string;
-      hotelNeedByDate?: string;
-      expectedDelivery?: string;
+      sampleApprovedDate?: string;
+      piSendDate?: string;
+      piApprovedDate?: string;
+      initialPaymentDate?: string;
     },
   ): Promise<{ totalCount: number; results: OrderPlanning[] }> {
-    const orderItems = await this.orderItemModel.findAll({
-      where: { orderItemId: orderItemIds },
+    // Verify all items exist
+    const items = await this.itemModel.findAll({
+      where: { itemId: itemIds },
     });
 
-    if (orderItems.length === 0) {
-      throw new NotFoundException('No order items found with the provided IDs');
+    if (items.length === 0) {
+      throw new NotFoundException('No items found with the provided IDs');
     }
 
-    if (orderItems.length !== orderItemIds.length) {
-      const foundIds = orderItems.map((item) => item.orderItemId);
-      const notFoundIds = orderItemIds.filter((id) => !foundIds.includes(id));
+    if (items.length !== itemIds.length) {
+      const foundIds = items.map((item) => item.itemId);
+      const notFoundIds = itemIds.filter((id) => !foundIds.includes(id));
       throw new BadRequestException(
-        `Order items not found: ${notFoundIds.join(', ')}`,
+        `Items not found: ${notFoundIds.join(', ')}`,
       );
     }
 
     try {
+      // Bulk upsert
       await this.orderPlanningModel.bulkCreate(
-        orderItemIds.map((orderItemId) => ({
-          orderItemId,
+        itemIds.map((itemId) => ({
+          itemId,
           ...updateData,
         })) as any,
         {
           updateOnDuplicate: [
-            'poApprovalDate',
-            'hotelNeedByDate',
-            'expectedDelivery',
+            'sampleApprovedDate',
+            'piSendDate',
+            'piApprovedDate',
+            'initialPaymentDate',
             'updatedAt',
           ],
         },
       );
 
+      // Fetch all results
       const results = await this.orderPlanningModel.findAll({
-        where: { orderItemId: orderItemIds },
-        include: [OrderItem],
+        where: { itemId: itemIds },
+        include: [Item],
         order: [['planningId', 'ASC']],
       });
 

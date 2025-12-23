@@ -16,10 +16,7 @@ async function runMigrations() {
       await import('./base/entities/item-category.entity');
     const { Item } = await import('./base/entities/item.entity');
     const { Vendor } = await import('./base/entities/vendor.entity');
-    const { VendorAddress } =
-      await import('./base/entities/vendor-address.entity');
     const { Customer } = await import('./base/entities/customer.entity');
-    const { OrderItem } = await import('./base/entities/order-item.entity');
     const { OrderPlanning } =
       await import('./base/entities/order-planning.entity');
     const { OrderProduction } =
@@ -34,9 +31,7 @@ async function runMigrations() {
         ItemCategory,
         Item,
         Vendor,
-        VendorAddress,
         Customer,
-        OrderItem,
         OrderPlanning,
         OrderProduction,
         OrderLogistics,

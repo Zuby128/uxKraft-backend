@@ -46,13 +46,13 @@ export class OrderPlanningController {
     return this.orderPlanningService.findAll();
   }
 
-  @Get('order-item/:orderItemId')
-  @ApiOperation({ summary: 'Get planning by order item ID' })
-  @ApiParam({ name: 'orderItemId', description: 'Order item ID' })
+  @Get('item/:itemId')
+  @ApiOperation({ summary: 'Get planning by item ID' })
+  @ApiParam({ name: 'itemId', description: 'Item ID' })
   @ApiResponse({ status: 200, description: 'Returns the planning record' })
-  @ApiResponse({ status: 404, description: 'Order item or planning not found' })
-  findByOrderItem(@Param('orderItemId', ParseIntPipe) orderItemId: number) {
-    return this.orderPlanningService.findByOrderItem(orderItemId);
+  @ApiResponse({ status: 404, description: 'Item or planning not found' })
+  findByItem(@Param('itemId', ParseIntPipe) itemId: number) {
+    return this.orderPlanningService.findByItem(itemId);
   }
 
   @Get(':id')
@@ -62,32 +62,6 @@ export class OrderPlanningController {
   @ApiResponse({ status: 404, description: 'Order planning not found' })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.orderPlanningService.findOne(id);
-  }
-
-  @Patch('bulk-update')
-  @ApiOperation({ summary: 'Bulk update planning for multiple order items' })
-  @ApiResponse({
-    status: 200,
-    description: 'Planning updated/created successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        totalCount: { type: 'number', example: 5 },
-        results: {
-          type: 'array',
-          items: { type: 'object' },
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid order item IDs' })
-  @ApiResponse({
-    status: 404,
-    description: 'No order items found with provided IDs',
-  })
-  bulkUpdate(@Body() bulkUpdateDto: BulkUpdateOrderPlanningDto) {
-    const { orderItemIds, ...updateData } = bulkUpdateDto;
-    return this.orderPlanningService.bulkUpdate(orderItemIds, updateData);
   }
 
   @Patch(':id')
@@ -116,5 +90,31 @@ export class OrderPlanningController {
   @ApiResponse({ status: 404, description: 'Order planning not found' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.orderPlanningService.remove(id);
+  }
+
+  @Patch('bulk-update')
+  @ApiOperation({ summary: 'Bulk update planning for multiple order items' })
+  @ApiResponse({
+    status: 200,
+    description: 'Planning updated/created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        totalCount: { type: 'number', example: 5 },
+        results: {
+          type: 'array',
+          items: { type: 'object' },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid order item IDs' })
+  @ApiResponse({
+    status: 404,
+    description: 'No order items found with provided IDs',
+  })
+  bulkUpdate(@Body() bulkUpdateDto: BulkUpdateOrderPlanningDto) {
+    const { itemIds, ...updateData } = bulkUpdateDto;
+    return this.orderPlanningService.bulkUpdate(itemIds, updateData as any);
   }
 }

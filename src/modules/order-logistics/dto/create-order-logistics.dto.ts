@@ -10,13 +10,13 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateOrderLogisticsDto {
   @ApiProperty({
-    description: 'Order item ID',
+    description: 'Item ID',
     example: 1,
   })
   @IsNotEmpty()
   @IsInt()
   @Min(1)
-  orderItemId: number;
+  itemId: number;
 
   @ApiPropertyOptional({
     description: 'Ordered date',

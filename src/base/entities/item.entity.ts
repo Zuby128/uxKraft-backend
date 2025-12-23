@@ -8,13 +8,20 @@ import {
   Unique,
   ForeignKey,
   BelongsTo,
+  HasOne,
   CreatedAt,
   UpdatedAt,
   DeletedAt,
-  BeforeUpdate,
   BeforeValidate,
+  BeforeUpdate,
 } from 'sequelize-typescript';
 import { ItemCategory } from './item-category.entity';
+import { Vendor } from './vendor.entity';
+import { Customer } from './customer.entity';
+import { Address } from './address.entity';
+import { OrderPlanning } from './order-planning.entity';
+import { OrderProduction } from './order-production.entity';
+import { OrderLogistics } from './order-logistics.entity';
 
 @Table({
   tableName: 'items',
@@ -34,6 +41,14 @@ import { ItemCategory } from './item-category.entity';
     {
       fields: ['item_name'],
       name: 'idx_items_name',
+    },
+    {
+      fields: ['vendor_id'],
+      name: 'idx_items_vendor',
+    },
+    {
+      fields: ['customer_id'],
+      name: 'idx_items_customer',
     },
   ],
 })
@@ -130,6 +145,68 @@ export class Item extends Model<Item> {
   })
   totalPrice: number;
 
+  // ========== ORDER FIELDS (moved from order_items) ==========
+
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+    defaultValue: 1,
+    field: 'quantity',
+  })
+  quantity: number;
+
+  @ForeignKey(() => Vendor)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+    field: 'vendor_id',
+  })
+  vendorId: number;
+
+  @ForeignKey(() => Address)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+    field: 'vendor_address_id',
+    comment: 'FK to addresses table (type=vendor)',
+  })
+  vendorAddressId: number;
+
+  @ForeignKey(() => Customer)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+    field: 'customer_id',
+  })
+  customerId: number;
+
+  @ForeignKey(() => Address)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+    field: 'customer_address_id',
+    comment: 'FK to addresses table (type=customer)',
+  })
+  customerAddressId: number;
+
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+    defaultValue: 0,
+    field: 'phase',
+    comment: '0=planning, 1=production, 2=logistics, 3=delivered',
+  })
+  phase: number;
+
+  @Column({
+    type: DataType.ARRAY(DataType.TEXT),
+    allowNull: true,
+    field: 'upload',
+  })
+  upload: string[];
+
+  // ========== END ORDER FIELDS ==========
+
   @CreatedAt
   @Column({
     type: DataType.DATE,
@@ -154,6 +231,27 @@ export class Item extends Model<Item> {
   // Relations
   @BelongsTo(() => ItemCategory)
   category: ItemCategory;
+
+  @BelongsTo(() => Vendor)
+  vendor: Vendor;
+
+  @BelongsTo(() => Customer)
+  customer: Customer;
+
+  @BelongsTo(() => Address, 'vendorAddressId')
+  vendorAddress: Address;
+
+  @BelongsTo(() => Address, 'customerAddressId')
+  customerAddress: Address;
+
+  @HasOne(() => OrderPlanning)
+  orderPlanning: OrderPlanning;
+
+  @HasOne(() => OrderProduction)
+  orderProduction: OrderProduction;
+
+  @HasOne(() => OrderLogistics)
+  orderLogistics: OrderLogistics;
 
   // Hooks - Auto calculate total_price
   @BeforeValidate

@@ -10,13 +10,14 @@ import {
   Unique,
   CreatedAt,
   UpdatedAt,
+  DeletedAt,
 } from 'sequelize-typescript';
-import { OrderItem } from './order-item.entity';
+import { Item } from './item.entity';
 
 @Table({
   tableName: 'order_production',
   timestamps: true,
-  paranoid: false,
+  paranoid: true,
   underscored: true,
 })
 export class OrderProduction extends Model<OrderProduction> {
@@ -29,13 +30,13 @@ export class OrderProduction extends Model<OrderProduction> {
   productionId: number;
 
   @Unique
-  @ForeignKey(() => OrderItem)
+  @ForeignKey(() => Item)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
-    field: 'order_item_id',
+    field: 'item_id',
   })
-  orderItemId: number;
+  itemId: number;
 
   @Column({
     type: DataType.DATEONLY,
@@ -72,7 +73,14 @@ export class OrderProduction extends Model<OrderProduction> {
   })
   updatedAt: Date;
 
+  @DeletedAt
+  @Column({
+    type: DataType.DATE,
+    field: 'deleted_at',
+  })
+  deletedAt: Date;
+
   // Relations
-  @BelongsTo(() => OrderItem)
-  orderItem: OrderItem;
+  @BelongsTo(() => Item)
+  item: Item;
 }

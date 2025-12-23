@@ -1,9 +1,7 @@
 import { ItemCategory } from 'src/base/entities/item-category.entity';
 import { Item } from 'src/base/entities/item.entity';
 import { Vendor } from 'src/base/entities/vendor.entity';
-import { VendorAddress } from 'src/base/entities/vendor-address.entity';
 import { Customer } from 'src/base/entities/customer.entity';
-import { OrderItem } from 'src/base/entities/order-item.entity';
 import { OrderPlanning } from 'src/base/entities/order-planning.entity';
 import { OrderProduction } from 'src/base/entities/order-production.entity';
 import { OrderLogistics } from 'src/base/entities/order-logistics.entity';
@@ -30,9 +28,7 @@ async function runSeeders() {
       ItemCategory,
       Item,
       Vendor,
-      VendorAddress,
       Customer,
-      OrderItem,
       OrderPlanning,
       OrderProduction,
       OrderLogistics,

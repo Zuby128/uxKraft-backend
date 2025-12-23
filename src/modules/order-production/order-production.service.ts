@@ -6,48 +6,45 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { CreationAttributes } from 'sequelize';
 import { CreateOrderProductionDto } from './dto/create-order-production.dto';
 import { UpdateOrderProductionDto } from './dto/update-order-production.dto';
 import { OrderProduction } from 'src/base/entities/order-production.entity';
-import { OrderItem } from 'src/base/entities/order-item.entity';
+import { Item } from 'src/base/entities/item.entity';
 
 @Injectable()
 export class OrderProductionService {
   constructor(
     @InjectModel(OrderProduction)
     private readonly orderProductionModel: typeof OrderProduction,
-    @InjectModel(OrderItem)
-    private readonly orderItemModel: typeof OrderItem,
+    @InjectModel(Item)
+    private readonly itemModel: typeof Item,
   ) {}
 
   async create(
     createOrderProductionDto: CreateOrderProductionDto,
   ): Promise<OrderProduction> {
-    // Verify order item exists
-    const orderItem = await this.orderItemModel.findByPk(
-      createOrderProductionDto.orderItemId,
-    );
-    if (!orderItem) {
+    // Verify item exists
+    const item = await this.itemModel.findByPk(createOrderProductionDto.itemId);
+    if (!item) {
       throw new BadRequestException(
-        `Order item with ID ${createOrderProductionDto.orderItemId} not found`,
+        `Item with ID ${createOrderProductionDto.itemId} not found`,
       );
     }
 
-    // Check if production already exists for this order item (one-to-one)
+    // Check if production already exists for this item (one-to-one)
     const existingProduction = await this.orderProductionModel.findOne({
-      where: { orderItemId: createOrderProductionDto.orderItemId },
+      where: { itemId: createOrderProductionDto.itemId },
     });
 
     if (existingProduction) {
       throw new ConflictException(
-        `Production already exists for order item ID ${createOrderProductionDto.orderItemId}`,
+        `Production already exists for item ID ${createOrderProductionDto.itemId}`,
       );
     }
 
     try {
       const production = await this.orderProductionModel.create(
-        createOrderProductionDto as unknown as CreationAttributes<OrderProduction>,
+        createOrderProductionDto as any,
       );
       return this.findOne(production.productionId);
     } catch (error) {
@@ -59,14 +56,14 @@ export class OrderProductionService {
 
   async findAll(): Promise<OrderProduction[]> {
     return this.orderProductionModel.findAll({
-      include: [OrderItem],
+      include: [Item],
       order: [['productionId', 'DESC']],
     });
   }
 
   async findOne(id: number): Promise<OrderProduction> {
     const production = await this.orderProductionModel.findByPk(id, {
-      include: [OrderItem],
+      include: [Item],
     });
 
     if (!production) {
@@ -76,22 +73,20 @@ export class OrderProductionService {
     return production;
   }
 
-  async findByOrderItem(orderItemId: number): Promise<OrderProduction> {
-    const orderItem = await this.orderItemModel.findByPk(orderItemId);
-    if (!orderItem) {
-      throw new NotFoundException(
-        `Order item with ID ${orderItemId} not found`,
-      );
+  async findByItem(itemId: number): Promise<OrderProduction> {
+    const item = await this.itemModel.findByPk(itemId);
+    if (!item) {
+      throw new NotFoundException(`Item with ID ${itemId} not found`);
     }
 
     const production = await this.orderProductionModel.findOne({
-      where: { orderItemId },
-      include: [OrderItem],
+      where: { itemId },
+      include: [Item],
     });
 
     if (!production) {
       throw new NotFoundException(
-        `Order production for order item ID ${orderItemId} not found`,
+        `Order production for item ID ${itemId} not found`,
       );
     }
 
@@ -116,37 +111,36 @@ export class OrderProductionService {
 
   async remove(id: number): Promise<void> {
     const production = await this.findOne(id);
-    await production.destroy(); // Hard delete (no soft delete for production)
+    await production.destroy();
   }
 
   async bulkUpdate(
-    orderItemIds: number[],
-    updateData: {
-      cfaShopsSend?: string;
-      cfaShopsApproved?: string;
-      cfaShopsDelivered?: string;
-    },
+    bulkUpdateDto: any,
   ): Promise<{ totalCount: number; results: OrderProduction[] }> {
-    const orderItems = await this.orderItemModel.findAll({
-      where: { orderItemId: orderItemIds },
+    const { itemIds, ...updateData } = bulkUpdateDto;
+
+    // Verify all items exist
+    const items = await this.itemModel.findAll({
+      where: { itemId: itemIds },
     });
 
-    if (orderItems.length === 0) {
-      throw new NotFoundException('No order items found with the provided IDs');
+    if (items.length === 0) {
+      throw new NotFoundException('No items found with the provided IDs');
     }
 
-    if (orderItems.length !== orderItemIds.length) {
-      const foundIds = orderItems.map((item) => item.orderItemId);
-      const notFoundIds = orderItemIds.filter((id) => !foundIds.includes(id));
+    if (items.length !== itemIds.length) {
+      const foundIds = items.map((item) => item.itemId);
+      const notFoundIds = itemIds.filter((id: any) => !foundIds.includes(id));
       throw new BadRequestException(
-        `Order items not found: ${notFoundIds.join(', ')}`,
+        `Items not found: ${notFoundIds.join(', ')}`,
       );
     }
 
     try {
+      // Bulk upsert
       await this.orderProductionModel.bulkCreate(
-        orderItemIds.map((orderItemId) => ({
-          orderItemId,
+        itemIds.map((itemId: any) => ({
+          itemId,
           ...updateData,
         })) as any,
         {
@@ -159,9 +153,10 @@ export class OrderProductionService {
         },
       );
 
+      // Fetch all results
       const results = await this.orderProductionModel.findAll({
-        where: { orderItemId: orderItemIds },
-        include: [OrderItem],
+        where: { itemId: itemIds },
+        include: [Item],
         order: [['productionId', 'ASC']],
       });
 

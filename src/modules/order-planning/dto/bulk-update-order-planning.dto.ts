@@ -18,7 +18,7 @@ export class BulkUpdateOrderPlanningDto {
   @ArrayMinSize(1)
   @IsInt({ each: true })
   @Min(1, { each: true })
-  orderItemIds: number[];
+  itemIds: number[];
 
   @ApiPropertyOptional({
     description: 'PO approval date',

@@ -11,12 +11,4 @@ export class CreateCustomerDto {
   @IsString()
   @MaxLength(50)
   name?: string;
-
-  @ApiPropertyOptional({
-    description: 'Customer address',
-    example: '1 Beach Rd, Los Angeles, CA 90001',
-  })
-  @IsOptional()
-  @IsString()
-  address?: string;
 }

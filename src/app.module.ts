@@ -9,10 +9,10 @@ import { ItemModule } from '@modules/item/item.module';
 import { VendorsModule } from '@modules/vendors/vendors.module';
 import { CustomersModule } from '@modules/customers/customers.module';
 import { UploadsModule } from '@modules/uploads/uploads.module';
-import { OrderItemsModule } from '@modules/order-items/order-items.module';
 import { OrderPlanningModule } from '@modules/order-planning/order-planning.module';
 import { OrderProductionModule } from '@modules/order-production/order-production.module';
 import { OrderLogisticsModule } from '@modules/order-logistics/order-logistics.module';
+import { AddressModule } from '@modules/address/address.module';
 
 @Module({
   imports: [
@@ -28,10 +28,10 @@ import { OrderLogisticsModule } from '@modules/order-logistics/order-logistics.m
     VendorsModule,
     CustomersModule,
     UploadsModule,
-    OrderItemsModule,
     OrderPlanningModule,
     OrderProductionModule,
     OrderLogisticsModule,
+    AddressModule,
   ],
   controllers: [AppController],
   providers: [AppService],

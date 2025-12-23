@@ -18,16 +18,16 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
-import { ItemService } from './item.service';
 import { BulkUpdateItemDto } from './dto/bulk-update-item.dto';
+import { ItemsService } from './item.service';
+import { FilterItemsDto } from './dto/filter-item.dto';
 
 @ApiTags('Items')
 @Controller('items')
-export class ItemController {
-  constructor(private readonly itemsService: ItemService) {}
+export class ItemsController {
+  constructor(private readonly itemsService: ItemsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new item' })
@@ -38,16 +38,79 @@ export class ItemController {
     description: 'Item with spec number already exists',
   })
   create(@Body() createItemDto: CreateItemDto) {
+    console.log('🎯 Controller received DTO:', createItemDto);
     return this.itemsService.create(createItemDto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all items' })
-  @ApiQuery({ name: 'includeCategory', required: false, type: Boolean })
-  @ApiResponse({ status: 200, description: 'Returns all items' })
-  findAll(@Query('includeCategory') includeCategory?: string) {
-    const include = includeCategory === 'true';
-    return this.itemsService.findAll(include);
+  @ApiOperation({ summary: 'Get all items with pagination' })
+  @ApiQuery({
+    name: 'includeRelations',
+    required: false,
+    type: Boolean,
+    description: 'Include all relations (default: true)',
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns paginated items',
+    schema: {
+      example: {
+        data: [],
+        meta: {
+          total: 100,
+          page: 1,
+          limit: 10,
+          totalPages: 10,
+        },
+      },
+    },
+  })
+  findAll(
+    @Query('includeRelations') includeRelations?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const includeR = includeRelations !== 'false';
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 10;
+    return this.itemsService.findAll(includeR, pageNum, limitNum);
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search and filter items with advanced options' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns filtered and paginated items',
+    schema: {
+      example: {
+        data: [
+          {
+            itemId: 1,
+            itemName: 'Premium Leather Sofa',
+            specNo: 'SOFA-001',
+            vendorId: 1,
+            phase: 3,
+            category: { categoryId: 1, name: 'Furniture' },
+            vendor: { vendorId: 1, vendorName: 'ACME Corporation' },
+            customer: { id: 1, name: 'Hotel California' },
+            orderPlanning: { planningId: 1 },
+            orderProduction: { productionId: 1 },
+            orderLogistics: { logisticsId: 1 },
+          },
+        ],
+        meta: {
+          total: 50,
+          page: 1,
+          limit: 10,
+          totalPages: 5,
+        },
+      },
+    },
+  })
+  search(@Query() filters: FilterItemsDto) {
+    return this.itemsService.search(filters);
   }
 
   @Get('spec/:specNo')
@@ -75,29 +138,6 @@ export class ItemController {
   @ApiResponse({ status: 404, description: 'Item not found' })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.itemsService.findOne(id);
-  }
-
-  @Patch('bulk-update')
-  @ApiOperation({ summary: 'Bulk update multiple items' })
-  @ApiResponse({
-    status: 200,
-    description: 'Items updated successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        updatedCount: { type: 'number', example: 5 },
-        updatedItems: {
-          type: 'array',
-          items: { type: 'object' },
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid item IDs or category ID' })
-  @ApiResponse({ status: 404, description: 'No items found with provided IDs' })
-  bulkUpdate(@Body() bulkUpdateItemDto: BulkUpdateItemDto) {
-    const { itemIds, ...updateData } = bulkUpdateItemDto;
-    return this.itemsService.bulkUpdate(itemIds, updateData);
   }
 
   @Patch(':id')
@@ -136,4 +176,27 @@ export class ItemController {
   restore(@Param('id', ParseIntPipe) id: number) {
     return this.itemsService.restore(id);
   }
+
+  // @Patch('bulk-update')
+  // @ApiOperation({ summary: 'Bulk update multiple items' })
+  // @ApiResponse({
+  //   status: 200,
+  //   description: 'Items updated successfully',
+  //   schema: {
+  //     type: 'object',
+  //     properties: {
+  //       updatedCount: { type: 'number', example: 5 },
+  //       updatedItems: {
+  //         type: 'array',
+  //         items: { type: 'object' },
+  //       },
+  //     },
+  //   },
+  // })
+  // @ApiResponse({ status: 400, description: 'Invalid item IDs or category ID' })
+  // @ApiResponse({ status: 404, description: 'No items found with provided IDs' })
+  // bulkUpdate(@Body() bulkUpdateItemDto: BulkUpdateItemDto) {
+  //   const { itemIds, ...updateData } = bulkUpdateItemDto;
+  //   return this.itemsService.bulkUpdate(itemIds, updateData);
+  // }
 }

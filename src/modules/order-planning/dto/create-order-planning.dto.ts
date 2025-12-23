@@ -9,41 +9,51 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateOrderPlanningDto {
   @ApiProperty({
-    description: 'Order item ID',
+    description: 'Item ID',
     example: 1,
   })
   @IsNotEmpty()
   @IsInt()
   @Min(1)
-  orderItemId: number;
+  itemId: number;
 
   @ApiPropertyOptional({
-    description: 'PO approval date',
+    description: 'Sample approved date',
     example: '2024-01-15',
     type: String,
     format: 'date',
   })
   @IsOptional()
   @IsDateString()
-  poApprovalDate?: string;
+  sampleApprovedDate?: string;
 
   @ApiPropertyOptional({
-    description: 'Hotel need by date',
-    example: '2024-02-01',
+    description: 'PI send date',
+    example: '2024-01-20',
     type: String,
     format: 'date',
   })
   @IsOptional()
   @IsDateString()
-  hotelNeedByDate?: string;
+  piSendDate?: string;
 
   @ApiPropertyOptional({
-    description: 'Expected delivery date',
+    description: 'PI approved date',
     example: '2024-01-25',
     type: String,
     format: 'date',
   })
   @IsOptional()
   @IsDateString()
-  expectedDelivery?: string;
+  piApprovedDate?: string;
+
+  @ApiPropertyOptional({
+    description: 'Initial payment date',
+    example: '2024-02-01',
+    type: String,
+    format: 'date',
+  })
+  @IsOptional()
+  @IsDateString()
+  initialPaymentDate?: string;
 }

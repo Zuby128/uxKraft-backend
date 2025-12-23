@@ -6,26 +6,38 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { CreationAttributes } from 'sequelize';
-import { CreateItemDto } from './dto/create-item.dto';
-import { UpdateItemDto } from './dto/update-item.dto';
+import { CreationAttributes, Op } from 'sequelize';
 import { Item } from 'src/base/entities/item.entity';
 import { ItemCategory } from 'src/base/entities/item-category.entity';
+import { Vendor } from 'src/base/entities/vendor.entity';
+import { Customer } from 'src/base/entities/customer.entity';
+import { Address } from 'src/base/entities/address.entity';
+import { OrderPlanning } from 'src/base/entities/order-planning.entity';
+import { OrderProduction } from 'src/base/entities/order-production.entity';
+import { OrderLogistics } from 'src/base/entities/order-logistics.entity';
+import { CreateItemDto } from './dto/create-item.dto';
+import { UpdateItemDto } from './dto/update-item.dto';
 
 @Injectable()
-export class ItemService {
+export class ItemsService {
   constructor(
     @InjectModel(Item)
     private readonly itemModel: typeof Item,
     @InjectModel(ItemCategory)
     private readonly categoryModel: typeof ItemCategory,
+    @InjectModel(Vendor)
+    private readonly vendorModel: typeof Vendor,
   ) {}
 
   async create(createItemDto: CreateItemDto): Promise<Item> {
+    console.log('📝 Creating item with DTO:', createItemDto);
+
     // Verify category exists
     const category = await this.categoryModel.findByPk(
       createItemDto.categoryId,
     );
+    console.log('📂 Category found:', category?.toJSON());
+
     if (!category) {
       throw new BadRequestException(
         `Category with ID ${createItemDto.categoryId} not found`,
@@ -33,13 +45,13 @@ export class ItemService {
     }
 
     try {
-      const item = await this.itemModel.create(
-        createItemDto as CreationAttributes<Item>,
-      );
+      const item = await this.itemModel.create(createItemDto as any);
+      console.log('✅ Item created:', item.toJSON());
       return this.findOne(item.itemId);
     } catch (error) {
       console.error('❌ Item creation error:', error);
-
+      console.error('❌ Error name:', error.name);
+      console.error('❌ Error message:', error.message);
       if (error.name === 'SequelizeUniqueConstraintError') {
         throw new ConflictException(
           'Item with this spec number already exists',
@@ -49,11 +61,140 @@ export class ItemService {
     }
   }
 
-  async findAll(includeCategory = true): Promise<Item[]> {
-    return this.itemModel.findAll({
-      include: includeCategory ? [ItemCategory] : [],
+  async findAll(
+    includeRelations = true,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{ data: Item[]; meta: any }> {
+    const offset = (page - 1) * limit;
+
+    const include = includeRelations
+      ? [
+          ItemCategory,
+          Vendor,
+          Customer,
+          { model: Address, as: 'vendorAddress' },
+          { model: Address, as: 'customerAddress' },
+          { model: OrderPlanning, as: 'orderPlanning', required: false },
+          { model: OrderProduction, as: 'orderProduction', required: false },
+          { model: OrderLogistics, as: 'orderLogistics', required: false },
+        ]
+      : [ItemCategory];
+
+    const { count, rows } = await this.itemModel.findAndCountAll({
+      include,
+      limit,
+      offset,
       order: [['itemName', 'ASC']],
+      distinct: true,
     });
+
+    return {
+      data: rows,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit),
+      },
+    };
+  }
+
+  async search(filterDto: any): Promise<{ data: Item[]; meta: any }> {
+    const where: any = {};
+
+    // Pagination
+    const page = filterDto.page || 1;
+    const limit = filterDto.limit || 10;
+    const offset = (page - 1) * limit;
+
+    // Phase filter
+    if (filterDto.phase !== undefined) {
+      where.phase = filterDto.phase;
+    }
+
+    // Vendor ID filter
+    if (filterDto.vendorId) {
+      where.vendorId = filterDto.vendorId;
+    }
+
+    // Customer ID filter
+    if (filterDto.customerId) {
+      where.customerId = filterDto.customerId;
+    }
+
+    // Item ID filter
+    if (filterDto.itemId) {
+      where.itemId = filterDto.itemId;
+    }
+
+    // Category ID filter
+    if (filterDto.categoryId) {
+      where.categoryId = filterDto.categoryId;
+    }
+
+    // Price range filter
+    if (filterDto.minPrice !== undefined || filterDto.maxPrice !== undefined) {
+      where.totalPrice = {};
+      if (filterDto.minPrice !== undefined) {
+        where.totalPrice[Op.gte] = filterDto.minPrice;
+      }
+      if (filterDto.maxPrice !== undefined) {
+        where.totalPrice[Op.lte] = filterDto.maxPrice;
+      }
+    }
+
+    // Search in item name or spec number
+    if (filterDto.search) {
+      where[Op.or] = [
+        { itemName: { [Op.iLike]: `%${filterDto.search}%` } },
+        { specNo: { [Op.iLike]: `%${filterDto.search}%` } },
+      ];
+    }
+
+    // Item name filter (partial match)
+    if (filterDto.itemName && !filterDto.search) {
+      where.itemName = { [Op.iLike]: `%${filterDto.itemName}%` };
+    }
+
+    // Spec no filter (partial match)
+    if (filterDto.specNo && !filterDto.search) {
+      where.specNo = { [Op.iLike]: `%${filterDto.specNo}%` };
+    }
+
+    const includeRelations = filterDto.includeRelations !== false;
+
+    const include: any[] = includeRelations
+      ? [
+          ItemCategory,
+          Vendor,
+          Customer,
+          { model: Address, as: 'vendorAddress' },
+          { model: Address, as: 'customerAddress' },
+          { model: OrderPlanning, as: 'orderPlanning', required: false },
+          { model: OrderProduction, as: 'orderProduction', required: false },
+          { model: OrderLogistics, as: 'orderLogistics', required: false },
+        ]
+      : [ItemCategory, Vendor];
+
+    const { count, rows } = await this.itemModel.findAndCountAll({
+      where: Object.keys(where).length > 0 ? where : undefined,
+      include,
+      limit,
+      offset,
+      order: [['itemName', 'ASC']],
+      distinct: true,
+    });
+
+    return {
+      data: rows,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit),
+      },
+    };
   }
 
   async findOne(id: number): Promise<Item> {
@@ -147,12 +288,13 @@ export class ItemService {
   async bulkUpdate(
     itemIds: number[],
     updateData: {
-      categoryId?: number | null;
+      categoryId?: number;
       location?: string;
       shipFrom?: string;
       notes?: string;
     },
   ): Promise<{ updatedCount: number; updatedItems: Item[] }> {
+    // Verify all items exist
     const items = await this.itemModel.findAll({
       where: { itemId: itemIds },
     });
@@ -169,7 +311,8 @@ export class ItemService {
       );
     }
 
-    if (updateData?.categoryId) {
+    // Verify category exists if categoryId is being updated
+    if (updateData.categoryId) {
       const category = await this.categoryModel.findByPk(updateData.categoryId);
       if (!category) {
         throw new BadRequestException(
@@ -179,10 +322,12 @@ export class ItemService {
     }
 
     try {
-      const [updatedCount] = await this.itemModel.update(updateData as any, {
+      // Perform bulk update using Sequelize
+      const [updatedCount] = await this.itemModel.update(updateData, {
         where: { itemId: itemIds },
       });
 
+      // Fetch updated items
       const updatedItems = await this.itemModel.findAll({
         where: { itemId: itemIds },
         include: [ItemCategory],

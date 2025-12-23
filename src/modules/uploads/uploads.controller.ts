@@ -37,22 +37,19 @@ export class UploadsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all uploads' })
-  @ApiQuery({ name: 'orderItemId', required: false, type: Number })
+  @ApiQuery({ name: 'itemId', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Returns all uploads' })
-  findAll(@Query('orderItemId', ParseIntPipe) orderItemId?: number) {
-    return this.uploadsService.findAll(orderItemId);
+  findAll(@Query('itemId', ParseIntPipe) itemId?: number) {
+    return this.uploadsService.findAll(itemId);
   }
 
-  @Get('order-item/:orderItemId')
-  @ApiOperation({ summary: 'Get uploads by order item' })
-  @ApiParam({ name: 'orderItemId', description: 'Order Item ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns uploads for the order item',
-  })
-  @ApiResponse({ status: 404, description: 'Order item not found' })
-  findByOrderItem(@Param('orderItemId', ParseIntPipe) orderItemId: number) {
-    return this.uploadsService.findByOrderItem(orderItemId);
+  @Get('item/:itemId')
+  @ApiOperation({ summary: 'Get uploads by item' })
+  @ApiParam({ name: 'itemId', description: 'Item ID' })
+  @ApiResponse({ status: 200, description: 'Returns uploads for the item' })
+  @ApiResponse({ status: 404, description: 'Item not found' })
+  findByItem(@Param('itemId', ParseIntPipe) itemId: number) {
+    return this.uploadsService.findByItem(itemId);
   }
 
   @Get(':id')

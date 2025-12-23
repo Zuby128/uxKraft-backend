@@ -6,48 +6,45 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { CreationAttributes } from 'sequelize';
 import { CreateOrderLogisticsDto } from './dto/create-order-logistics.dto';
 import { UpdateOrderLogisticsDto } from './dto/update-order-logistics.dto';
 import { OrderLogistics } from 'src/base/entities/order-logistics.entity';
-import { OrderItem } from 'src/base/entities/order-item.entity';
+import { Item } from 'src/base/entities/item.entity';
 
 @Injectable()
 export class OrderLogisticsService {
   constructor(
     @InjectModel(OrderLogistics)
     private readonly orderLogisticsModel: typeof OrderLogistics,
-    @InjectModel(OrderItem)
-    private readonly orderItemModel: typeof OrderItem,
+    @InjectModel(Item)
+    private readonly itemModel: typeof Item,
   ) {}
 
   async create(
     createOrderLogisticsDto: CreateOrderLogisticsDto,
   ): Promise<OrderLogistics> {
-    // Verify order item exists
-    const orderItem = await this.orderItemModel.findByPk(
-      createOrderLogisticsDto.orderItemId,
-    );
-    if (!orderItem) {
+    // Verify item exists
+    const item = await this.itemModel.findByPk(createOrderLogisticsDto.itemId);
+    if (!item) {
       throw new BadRequestException(
-        `Order item with ID ${createOrderLogisticsDto.orderItemId} not found`,
+        `Item with ID ${createOrderLogisticsDto.itemId} not found`,
       );
     }
 
-    // Check if logistics already exists for this order item (one-to-one)
+    // Check if logistics already exists for this item (one-to-one)
     const existingLogistics = await this.orderLogisticsModel.findOne({
-      where: { orderItemId: createOrderLogisticsDto.orderItemId },
+      where: { itemId: createOrderLogisticsDto.itemId },
     });
 
     if (existingLogistics) {
       throw new ConflictException(
-        `Logistics already exists for order item ID ${createOrderLogisticsDto.orderItemId}`,
+        `Logistics already exists for item ID ${createOrderLogisticsDto.itemId}`,
       );
     }
 
     try {
       const logistics = await this.orderLogisticsModel.create(
-        createOrderLogisticsDto as unknown as CreationAttributes<OrderLogistics>,
+        createOrderLogisticsDto as any,
       );
       return this.findOne(logistics.logisticsId);
     } catch (error) {
@@ -59,14 +56,14 @@ export class OrderLogisticsService {
 
   async findAll(): Promise<OrderLogistics[]> {
     return this.orderLogisticsModel.findAll({
-      include: [OrderItem],
+      include: [Item],
       order: [['logisticsId', 'DESC']],
     });
   }
 
   async findOne(id: number): Promise<OrderLogistics> {
     const logistics = await this.orderLogisticsModel.findByPk(id, {
-      include: [OrderItem],
+      include: [Item],
     });
 
     if (!logistics) {
@@ -76,22 +73,20 @@ export class OrderLogisticsService {
     return logistics;
   }
 
-  async findByOrderItem(orderItemId: number): Promise<OrderLogistics> {
-    const orderItem = await this.orderItemModel.findByPk(orderItemId);
-    if (!orderItem) {
-      throw new NotFoundException(
-        `Order item with ID ${orderItemId} not found`,
-      );
+  async findByItem(itemId: number): Promise<OrderLogistics> {
+    const item = await this.itemModel.findByPk(itemId);
+    if (!item) {
+      throw new NotFoundException(`Item with ID ${itemId} not found`);
     }
 
     const logistics = await this.orderLogisticsModel.findOne({
-      where: { orderItemId },
-      include: [OrderItem],
+      where: { itemId },
+      include: [Item],
     });
 
     if (!logistics) {
       throw new NotFoundException(
-        `Order logistics for order item ID ${orderItemId} not found`,
+        `Order logistics for item ID ${itemId} not found`,
       );
     }
 
@@ -116,11 +111,11 @@ export class OrderLogisticsService {
 
   async remove(id: number): Promise<void> {
     const logistics = await this.findOne(id);
-    await logistics.destroy(); // Hard delete (no soft delete for logistics)
+    await logistics.destroy();
   }
 
   async bulkUpdate(
-    orderItemIds: number[],
+    itemIds: number[],
     updateData: {
       orderedDate?: string;
       shippedDate?: string;
@@ -128,26 +123,28 @@ export class OrderLogisticsService {
       shippingNotes?: string;
     },
   ): Promise<{ totalCount: number; results: OrderLogistics[] }> {
-    const orderItems = await this.orderItemModel.findAll({
-      where: { orderItemId: orderItemIds },
+    // Verify all items exist
+    const items = await this.itemModel.findAll({
+      where: { itemId: itemIds },
     });
 
-    if (orderItems.length === 0) {
-      throw new NotFoundException('No order items found with the provided IDs');
+    if (items.length === 0) {
+      throw new NotFoundException('No items found with the provided IDs');
     }
 
-    if (orderItems.length !== orderItemIds.length) {
-      const foundIds = orderItems.map((item) => item.orderItemId);
-      const notFoundIds = orderItemIds.filter((id) => !foundIds.includes(id));
+    if (items.length !== itemIds.length) {
+      const foundIds = items.map((item) => item.itemId);
+      const notFoundIds = itemIds.filter((id) => !foundIds.includes(id));
       throw new BadRequestException(
-        `Order items not found: ${notFoundIds.join(', ')}`,
+        `Items not found: ${notFoundIds.join(', ')}`,
       );
     }
 
     try {
+      // Bulk upsert
       await this.orderLogisticsModel.bulkCreate(
-        orderItemIds.map((orderItemId) => ({
-          orderItemId,
+        itemIds.map((itemId) => ({
+          itemId,
           ...updateData,
         })) as any,
         {
@@ -161,9 +158,10 @@ export class OrderLogisticsService {
         },
       );
 
+      // Fetch all results
       const results = await this.orderLogisticsModel.findAll({
-        where: { orderItemId: orderItemIds },
-        include: [OrderItem],
+        where: { itemId: itemIds },
+        include: [Item],
         order: [['logisticsId', 'ASC']],
       });
 

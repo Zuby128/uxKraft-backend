@@ -46,16 +46,13 @@ export class OrderLogisticsController {
     return this.orderLogisticsService.findAll();
   }
 
-  @Get('order-item/:orderItemId')
-  @ApiOperation({ summary: 'Get logistics by order item ID' })
-  @ApiParam({ name: 'orderItemId', description: 'Order item ID' })
+  @Get('item/:itemId')
+  @ApiOperation({ summary: 'Get logistics by item ID' })
+  @ApiParam({ name: 'itemId', description: 'Item ID' })
   @ApiResponse({ status: 200, description: 'Returns the logistics record' })
-  @ApiResponse({
-    status: 404,
-    description: 'Order item or logistics not found',
-  })
-  findByOrderItem(@Param('orderItemId', ParseIntPipe) orderItemId: number) {
-    return this.orderLogisticsService.findByOrderItem(orderItemId);
+  @ApiResponse({ status: 404, description: 'Item or logistics not found' })
+  findByItem(@Param('itemId', ParseIntPipe) itemId: number) {
+    return this.orderLogisticsService.findByItem(itemId);
   }
 
   @Get(':id')
@@ -65,32 +62,6 @@ export class OrderLogisticsController {
   @ApiResponse({ status: 404, description: 'Order logistics not found' })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.orderLogisticsService.findOne(id);
-  }
-
-  @Patch('bulk-update')
-  @ApiOperation({ summary: 'Bulk update logistics for multiple order items' })
-  @ApiResponse({
-    status: 200,
-    description: 'Logistics updated/created successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        totalCount: { type: 'number', example: 5 },
-        results: {
-          type: 'array',
-          items: { type: 'object' },
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid order item IDs' })
-  @ApiResponse({
-    status: 404,
-    description: 'No order items found with provided IDs',
-  })
-  bulkUpdate(@Body() bulkUpdateDto: BulkUpdateOrderLogisticsDto) {
-    const { orderItemIds, ...updateData } = bulkUpdateDto;
-    return this.orderLogisticsService.bulkUpdate(orderItemIds, updateData);
   }
 
   @Patch(':id')
@@ -119,5 +90,28 @@ export class OrderLogisticsController {
   @ApiResponse({ status: 404, description: 'Order logistics not found' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.orderLogisticsService.remove(id);
+  }
+
+  @Patch('bulk-update')
+  @ApiOperation({ summary: 'Bulk update logistics for multiple order items' })
+  @ApiResponse({
+    status: 200,
+    description: 'Logistics updated/created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        totalCount: { type: 'number', example: 5 },
+        results: {
+          type: 'array',
+          items: { type: 'object' },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid item IDs' })
+  @ApiResponse({ status: 404, description: 'No items found with provided IDs' })
+  bulkUpdate(@Body() bulkUpdateDto: BulkUpdateOrderLogisticsDto) {
+    const { itemIds, ...updateData } = bulkUpdateDto;
+    return this.orderLogisticsService.bulkUpdate(itemIds, updateData);
   }
 }

@@ -22,11 +22,20 @@ function parseDatabaseUrl(): Partial<SequelizeModuleOptions> | null {
       password: url.password,
       database: url.pathname.slice(1), // Remove leading '/'
       dialectOptions: {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false, // Heroku requires this
-        },
+        ssl:
+          process.env.NODE_ENV === 'production'
+            ? {
+                require: true,
+                rejectUnauthorized: false, // Essential for Heroku/DigitalOcean/AWS
+              }
+            : false,
       },
+      // dialectOptions: {
+      //   ssl: {
+      //     require: true,
+      //     rejectUnauthorized: false, // Heroku requires this
+      //   },
+      // },
     };
 
     console.log('✅ Parsed DATABASE_URL:', {

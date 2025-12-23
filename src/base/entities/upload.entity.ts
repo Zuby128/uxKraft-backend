@@ -7,12 +7,16 @@ import {
   AutoIncrement,
   ForeignKey,
   BelongsTo,
+  CreatedAt,
+  UpdatedAt,
+  DeletedAt,
 } from 'sequelize-typescript';
-import { OrderItem } from './order-item.entity';
+import { Item } from './item.entity';
 
 @Table({
   tableName: 'uploads',
-  timestamps: false,
+  timestamps: true,
+  paranoid: true,
   underscored: true,
 })
 export class Upload extends Model<Upload> {
@@ -24,7 +28,7 @@ export class Upload extends Model<Upload> {
   })
   id: number;
 
-  @ForeignKey(() => OrderItem)
+  @ForeignKey(() => Item)
   @Column({
     type: DataType.INTEGER,
     allowNull: true,
@@ -46,7 +50,28 @@ export class Upload extends Model<Upload> {
   })
   url: string;
 
+  @CreatedAt
+  @Column({
+    type: DataType.DATE,
+    field: 'created_at',
+  })
+  createdAt: Date;
+
+  @UpdatedAt
+  @Column({
+    type: DataType.DATE,
+    field: 'updated_at',
+  })
+  updatedAt: Date;
+
+  @DeletedAt
+  @Column({
+    type: DataType.DATE,
+    field: 'deleted_at',
+  })
+  deletedAt: Date;
+
   // Relations
-  @BelongsTo(() => OrderItem)
-  orderItem: OrderItem;
+  @BelongsTo(() => Item)
+  item: Item;
 }

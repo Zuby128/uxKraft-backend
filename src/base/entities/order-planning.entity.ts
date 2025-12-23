@@ -10,13 +10,14 @@ import {
   Unique,
   CreatedAt,
   UpdatedAt,
+  DeletedAt,
 } from 'sequelize-typescript';
-import { OrderItem } from './order-item.entity';
+import { Item } from './item.entity';
 
 @Table({
   tableName: 'order_planning',
   timestamps: true,
-  paranoid: false,
+  paranoid: true,
   underscored: true,
 })
 export class OrderPlanning extends Model<OrderPlanning> {
@@ -29,34 +30,41 @@ export class OrderPlanning extends Model<OrderPlanning> {
   planningId: number;
 
   @Unique
-  @ForeignKey(() => OrderItem)
+  @ForeignKey(() => Item)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
-    field: 'order_item_id',
+    field: 'item_id',
   })
-  orderItemId: number;
+  itemId: number;
 
   @Column({
     type: DataType.DATEONLY,
     allowNull: true,
-    field: 'po_approval_date',
+    field: 'sample_approved_date',
   })
-  poApprovalDate: Date;
+  sampleApprovedDate: Date;
 
   @Column({
     type: DataType.DATEONLY,
     allowNull: true,
-    field: 'hotel_need_by_date',
+    field: 'pi_send_date',
   })
-  hotelNeedByDate: Date;
+  piSendDate: Date;
 
   @Column({
     type: DataType.DATEONLY,
     allowNull: true,
-    field: 'expected_delivery',
+    field: 'pi_approved_date',
   })
-  expectedDelivery: Date;
+  piApprovedDate: Date;
+
+  @Column({
+    type: DataType.DATEONLY,
+    allowNull: true,
+    field: 'initial_payment_date',
+  })
+  initialPaymentDate: Date;
 
   @CreatedAt
   @Column({
@@ -72,7 +80,14 @@ export class OrderPlanning extends Model<OrderPlanning> {
   })
   updatedAt: Date;
 
+  @DeletedAt
+  @Column({
+    type: DataType.DATE,
+    field: 'deleted_at',
+  })
+  deletedAt: Date;
+
   // Relations
-  @BelongsTo(() => OrderItem)
-  orderItem: OrderItem;
+  @BelongsTo(() => Item)
+  item: Item;
 }

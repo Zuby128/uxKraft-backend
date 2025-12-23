@@ -3,10 +3,10 @@ import { VendorsService } from './vendors.service';
 import { VendorsController } from './vendors.controller';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { Vendor } from 'src/base/entities/vendor.entity';
-import { VendorAddress } from 'src/base/entities/vendor-address.entity';
+import { Address } from 'src/base/entities/address.entity';
 
 @Module({
-  imports: [SequelizeModule.forFeature([Vendor, VendorAddress])],
+  imports: [SequelizeModule.forFeature([Vendor, Address])],
   providers: [VendorsService],
   controllers: [VendorsController],
   exports: [VendorsService],

@@ -5,13 +5,15 @@ import {
   DataType,
   PrimaryKey,
   AutoIncrement,
-  HasMany,
+  CreatedAt,
+  UpdatedAt,
+  DeletedAt,
 } from 'sequelize-typescript';
-import { OrderItem } from './order-item.entity';
 
 @Table({
   tableName: 'customers',
-  timestamps: false,
+  timestamps: true,
+  paranoid: true,
   underscored: true,
 })
 export class Customer extends Model<Customer> {
@@ -24,20 +26,34 @@ export class Customer extends Model<Customer> {
   id: number;
 
   @Column({
-    type: DataType.STRING(50),
-    allowNull: true,
+    type: DataType.STRING(255),
+    allowNull: false,
     field: 'name',
   })
   name: string;
 
+  @CreatedAt
   @Column({
-    type: DataType.TEXT,
-    allowNull: true,
-    field: 'address',
+    type: DataType.DATE,
+    field: 'created_at',
   })
-  address: string;
+  createdAt: Date;
 
-  // Relations
-  @HasMany(() => OrderItem)
-  orderItems: OrderItem[];
+  @UpdatedAt
+  @Column({
+    type: DataType.DATE,
+    field: 'updated_at',
+  })
+  updatedAt: Date;
+
+  @DeletedAt
+  @Column({
+    type: DataType.DATE,
+    field: 'deleted_at',
+  })
+  deletedAt: Date;
+
+  // Relations will be added later
+  // @HasMany(() => Item)
+  // items: Item[];
 }

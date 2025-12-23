@@ -11,7 +11,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class BulkUpdateOrderLogisticsDto {
   @ApiProperty({
-    description: 'Array of order item IDs to update logistics for',
+    description: 'Array of item IDs to update logistics for',
     example: [1, 2, 3, 4],
     type: [Number],
   })
@@ -19,7 +19,7 @@ export class BulkUpdateOrderLogisticsDto {
   @ArrayMinSize(1)
   @IsInt({ each: true })
   @Min(1, { each: true })
-  orderItemIds: number[];
+  itemIds: number[];
 
   @ApiPropertyOptional({
     description: 'Ordered date',

@@ -3,27 +3,22 @@ import {
   NotFoundException,
   ConflictException,
   InternalServerErrorException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CreationAttributes } from 'sequelize';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
-import { CreateVendorAddressDto } from './dto/create-vendor-address.dto';
-import { UpdateVendorAddressDto } from './dto/update-vendor-address.dto';
 import { Vendor } from 'src/base/entities/vendor.entity';
-import { VendorAddress } from 'src/base/entities/vendor-address.entity';
+import { Address } from 'src/base/entities/address.entity';
 
 @Injectable()
 export class VendorsService {
   constructor(
     @InjectModel(Vendor)
     private readonly vendorModel: typeof Vendor,
-    @InjectModel(VendorAddress)
-    private readonly vendorAddressModel: typeof VendorAddress,
+    @InjectModel(Address)
+    private readonly addressModel: typeof Address,
   ) {}
-
-  // ==================== Vendor CRUD ====================
 
   async createVendor(createVendorDto: CreateVendorDto): Promise<Vendor> {
     try {
@@ -40,19 +35,35 @@ export class VendorsService {
   }
 
   async findAllVendors(includeAddresses = false): Promise<Vendor[]> {
-    return this.vendorModel.findAll({
-      include: includeAddresses ? [VendorAddress] : [],
+    const vendors = await this.vendorModel.findAll({
       order: [['vendorName', 'ASC']],
     });
+
+    if (includeAddresses) {
+      // Load addresses separately and attach
+      for (const vendor of vendors) {
+        const addresses = await this.addressModel.findAll({
+          where: { type: 'vendor', referenceId: vendor.vendorId },
+        });
+        (vendor as any).addresses = addresses;
+      }
+    }
+
+    return vendors;
   }
 
-  async findOneVendor(id: number): Promise<Vendor> {
-    const vendor = await this.vendorModel.findByPk(id, {
-      include: [VendorAddress],
-    });
+  async findOneVendor(id: number, includeAddresses = true): Promise<Vendor> {
+    const vendor = await this.vendorModel.findByPk(id);
 
     if (!vendor) {
       throw new NotFoundException(`Vendor with ID ${id} not found`);
+    }
+
+    if (includeAddresses) {
+      const addresses = await this.addressModel.findAll({
+        where: { type: 'vendor', referenceId: vendor.vendorId },
+      });
+      (vendor as any).addresses = addresses;
     }
 
     return vendor;
@@ -62,7 +73,7 @@ export class VendorsService {
     id: number,
     updateVendorDto: UpdateVendorDto,
   ): Promise<Vendor> {
-    const vendor = await this.findOneVendor(id);
+    const vendor = await this.findOneVendor(id, false);
 
     try {
       await vendor.update(updateVendorDto);
@@ -76,7 +87,7 @@ export class VendorsService {
   }
 
   async removeVendor(id: number): Promise<void> {
-    const vendor = await this.findOneVendor(id);
+    const vendor = await this.findOneVendor(id, false);
     await vendor.destroy(); // Soft delete
   }
 
@@ -97,98 +108,17 @@ export class VendorsService {
     return this.findOneVendor(id);
   }
 
-  // ==================== VendorAddress CRUD ====================
+  // ==================== Vendor Addresses ====================
+  // Note: Address CRUD is now handled by AddressesService
+  // These methods are for convenience when working with vendors
 
-  async createVendorAddress(
-    createVendorAddressDto: CreateVendorAddressDto,
-  ): Promise<VendorAddress> {
+  async getVendorAddresses(vendorId: number): Promise<Address[]> {
     // Verify vendor exists
-    const vendor = await this.vendorModel.findByPk(
-      createVendorAddressDto.vendorId,
-    );
-    if (!vendor) {
-      throw new BadRequestException(
-        `Vendor with ID ${createVendorAddressDto.vendorId} not found`,
-      );
-    }
+    await this.findOneVendor(vendorId, false);
 
-    try {
-      const address = await this.vendorAddressModel.create(
-        createVendorAddressDto as CreationAttributes<VendorAddress>,
-      );
-      return this.findOneVendorAddress(address.id);
-    } catch (error) {
-      throw new InternalServerErrorException('Failed to create vendor address');
-    }
-  }
-
-  async findAllVendorAddresses(vendorId?: number): Promise<VendorAddress[]> {
-    const where = vendorId ? { vendorId } : {};
-
-    return this.vendorAddressModel.findAll({
-      where,
-      include: [Vendor],
-      order: [['title', 'ASC']],
+    return this.addressModel.findAll({
+      where: { type: 'vendor', referenceId: vendorId },
+      order: [['addressId', 'ASC']],
     });
-  }
-
-  async findOneVendorAddress(id: number): Promise<VendorAddress> {
-    const address = await this.vendorAddressModel.findByPk(id, {
-      include: [Vendor],
-    });
-
-    if (!address) {
-      throw new NotFoundException(`Vendor address with ID ${id} not found`);
-    }
-
-    return address;
-  }
-
-  async updateVendorAddress(
-    id: number,
-    updateVendorAddressDto: UpdateVendorAddressDto,
-  ): Promise<VendorAddress> {
-    const address = await this.findOneVendorAddress(id);
-
-    // Verify vendor exists if vendorId is being updated
-    if (updateVendorAddressDto.vendorId) {
-      const vendor = await this.vendorModel.findByPk(
-        updateVendorAddressDto.vendorId,
-      );
-      if (!vendor) {
-        throw new BadRequestException(
-          `Vendor with ID ${updateVendorAddressDto.vendorId} not found`,
-        );
-      }
-    }
-
-    try {
-      await address.update(updateVendorAddressDto);
-      return this.findOneVendorAddress(id);
-    } catch (error) {
-      throw new InternalServerErrorException('Failed to update vendor address');
-    }
-  }
-
-  async removeVendorAddress(id: number): Promise<void> {
-    const address = await this.findOneVendorAddress(id);
-    await address.destroy(); // Soft delete
-  }
-
-  async restoreVendorAddress(id: number): Promise<VendorAddress> {
-    const address = await this.vendorAddressModel.findByPk(id, {
-      paranoid: false,
-    });
-
-    if (!address) {
-      throw new NotFoundException(`Vendor address with ID ${id} not found`);
-    }
-
-    if (!address.deletedAt) {
-      throw new ConflictException('Vendor address is not deleted');
-    }
-
-    await address.restore();
-    return this.findOneVendorAddress(id);
   }
 }

@@ -48,16 +48,13 @@ export class OrderProductionController {
     return this.orderProductionService.findAll();
   }
 
-  @Get('order-item/:orderItemId')
-  @ApiOperation({ summary: 'Get production by order item ID' })
-  @ApiParam({ name: 'orderItemId', description: 'Order item ID' })
+  @Get('item/:itemId')
+  @ApiOperation({ summary: 'Get production by item ID' })
+  @ApiParam({ name: 'itemId', description: 'Item ID' })
   @ApiResponse({ status: 200, description: 'Returns the production record' })
-  @ApiResponse({
-    status: 404,
-    description: 'Order item or production not found',
-  })
-  findByOrderItem(@Param('orderItemId', ParseIntPipe) orderItemId: number) {
-    return this.orderProductionService.findByOrderItem(orderItemId);
+  @ApiResponse({ status: 404, description: 'Item or production not found' })
+  findByItem(@Param('itemId', ParseIntPipe) itemId: number) {
+    return this.orderProductionService.findByItem(itemId);
   }
 
   @Get(':id')
@@ -67,32 +64,6 @@ export class OrderProductionController {
   @ApiResponse({ status: 404, description: 'Order production not found' })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.orderProductionService.findOne(id);
-  }
-
-  @Patch('bulk-update')
-  @ApiOperation({ summary: 'Bulk update production for multiple order items' })
-  @ApiResponse({
-    status: 200,
-    description: 'Production updated/created successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        totalCount: { type: 'number', example: 5 },
-        results: {
-          type: 'array',
-          items: { type: 'object' },
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid order item IDs' })
-  @ApiResponse({
-    status: 404,
-    description: 'No order items found with provided IDs',
-  })
-  bulkUpdate(@Body() bulkUpdateDto: BulkUpdateOrderProductionDto) {
-    const { orderItemIds, ...updateData } = bulkUpdateDto;
-    return this.orderProductionService.bulkUpdate(orderItemIds, updateData);
   }
 
   @Patch(':id')
@@ -121,5 +92,30 @@ export class OrderProductionController {
   @ApiResponse({ status: 404, description: 'Order production not found' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.orderProductionService.remove(id);
+  }
+
+  @Patch('bulk-update')
+  @ApiOperation({ summary: 'Bulk update production for multiple order items' })
+  @ApiResponse({
+    status: 200,
+    description: 'Production updated/created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        totalCount: { type: 'number', example: 5 },
+        results: {
+          type: 'array',
+          items: { type: 'object' },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid order item IDs' })
+  @ApiResponse({
+    status: 404,
+    description: 'No order items found with provided IDs',
+  })
+  bulkUpdate(@Body() bulkUpdateDto: BulkUpdateOrderProductionDto) {
+    return this.orderProductionService.bulkUpdate(bulkUpdateDto);
   }
 }

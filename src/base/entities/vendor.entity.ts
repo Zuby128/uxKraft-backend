@@ -9,10 +9,7 @@ import {
   CreatedAt,
   UpdatedAt,
   DeletedAt,
-  HasMany,
 } from 'sequelize-typescript';
-import { VendorAddress } from './vendor-address.entity';
-import { OrderItem } from './order-item.entity';
 
 @Table({
   tableName: 'vendors',
@@ -66,9 +63,6 @@ export class Vendor extends Model<Vendor> {
   deletedAt: Date;
 
   // Relations
-  @HasMany(() => VendorAddress)
-  addresses: VendorAddress[];
-
-  @HasMany(() => OrderItem)
-  orderItems: OrderItem[];
+  // @HasMany(() => Item)
+  // items: Item[];
 }

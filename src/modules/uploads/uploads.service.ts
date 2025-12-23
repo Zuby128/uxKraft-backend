@@ -9,26 +9,24 @@ import { CreationAttributes } from 'sequelize';
 import { CreateUploadDto } from './dto/create-upload.dto';
 import { UpdateUploadDto } from './dto/update-upload.dto';
 import { Upload } from 'src/base/entities/upload.entity';
-import { OrderItem } from 'src/base/entities/order-item.entity';
+import { Item } from 'src/base/entities/item.entity';
 
 @Injectable()
 export class UploadsService {
   constructor(
     @InjectModel(Upload)
     private readonly uploadModel: typeof Upload,
-    @InjectModel(OrderItem)
-    private readonly orderItemModel: typeof OrderItem,
+    @InjectModel(Item)
+    private readonly itemModel: typeof Item,
   ) {}
 
   async create(createUploadDto: CreateUploadDto): Promise<Upload> {
-    // Verify order item exists if itemId is provided
+    // Verify item exists if itemId is provided
     if (createUploadDto.itemId) {
-      const orderItem = await this.orderItemModel.findByPk(
-        createUploadDto.itemId,
-      );
-      if (!orderItem) {
+      const item = await this.itemModel.findByPk(createUploadDto.itemId);
+      if (!item) {
         throw new BadRequestException(
-          `Order item with ID ${createUploadDto.itemId} not found`,
+          `Item with ID ${createUploadDto.itemId} not found`,
         );
       }
     }
@@ -43,19 +41,19 @@ export class UploadsService {
     }
   }
 
-  async findAll(orderItemId?: number): Promise<Upload[]> {
-    const where = orderItemId ? { itemId: orderItemId } : {};
+  async findAll(itemId?: number): Promise<Upload[]> {
+    const where = itemId ? { itemId } : {};
 
     return this.uploadModel.findAll({
       where,
-      include: [OrderItem],
+      include: [Item],
       order: [['id', 'DESC']],
     });
   }
 
   async findOne(id: number): Promise<Upload> {
     const upload = await this.uploadModel.findByPk(id, {
-      include: [OrderItem],
+      include: [Item],
     });
 
     if (!upload) {
@@ -65,17 +63,15 @@ export class UploadsService {
     return upload;
   }
 
-  async findByOrderItem(orderItemId: number): Promise<Upload[]> {
-    const orderItem = await this.orderItemModel.findByPk(orderItemId);
-    if (!orderItem) {
-      throw new NotFoundException(
-        `Order item with ID ${orderItemId} not found`,
-      );
+  async findByItem(itemId: number): Promise<Upload[]> {
+    const item = await this.itemModel.findByPk(itemId);
+    if (!item) {
+      throw new NotFoundException(`Item with ID ${itemId} not found`);
     }
 
     return this.uploadModel.findAll({
-      where: { itemId: orderItemId },
-      include: [OrderItem],
+      where: { itemId },
+      include: [Item],
       order: [['id', 'DESC']],
     });
   }
@@ -83,14 +79,12 @@ export class UploadsService {
   async update(id: number, updateUploadDto: UpdateUploadDto): Promise<Upload> {
     const upload = await this.findOne(id);
 
-    // Verify order item exists if itemId is being updated
+    // Verify item exists if itemId is being updated
     if (updateUploadDto.itemId) {
-      const orderItem = await this.orderItemModel.findByPk(
-        updateUploadDto.itemId,
-      );
-      if (!orderItem) {
+      const item = await this.itemModel.findByPk(updateUploadDto.itemId);
+      if (!item) {
         throw new BadRequestException(
-          `Order item with ID ${updateUploadDto.itemId} not found`,
+          `Item with ID ${updateUploadDto.itemId} not found`,
         );
       }
     }
@@ -105,6 +99,6 @@ export class UploadsService {
 
   async remove(id: number): Promise<void> {
     const upload = await this.findOne(id);
-    await upload.destroy(); // Hard delete (no soft delete for uploads)
+    await upload.destroy();
   }
 }

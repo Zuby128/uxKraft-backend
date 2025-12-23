@@ -10,7 +10,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class BulkUpdateOrderProductionDto {
   @ApiProperty({
-    description: 'Array of order item IDs to update production for',
+    description: 'Array of item IDs to update production for',
     example: [1, 2, 3, 4],
     type: [Number],
   })
@@ -18,7 +18,7 @@ export class BulkUpdateOrderProductionDto {
   @ArrayMinSize(1)
   @IsInt({ each: true })
   @Min(1, { each: true })
-  orderItemIds: number[];
+  itemIds: number[];
 
   @ApiPropertyOptional({
     description: 'CFA shops send date',
