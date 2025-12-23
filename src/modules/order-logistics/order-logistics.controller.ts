@@ -64,6 +64,29 @@ export class OrderLogisticsController {
     return this.orderLogisticsService.findOne(id);
   }
 
+  @Patch('bulk-update')
+  @ApiOperation({ summary: 'Bulk update logistics for multiple order items' })
+  @ApiResponse({
+    status: 200,
+    description: 'Logistics updated/created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        totalCount: { type: 'number', example: 5 },
+        results: {
+          type: 'array',
+          items: { type: 'object' },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid item IDs' })
+  @ApiResponse({ status: 404, description: 'No items found with provided IDs' })
+  bulkUpdate(@Body() bulkUpdateDto: BulkUpdateOrderLogisticsDto) {
+    const { itemIds, ...updateData } = bulkUpdateDto;
+    return this.orderLogisticsService.bulkUpdate(itemIds, updateData);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update order logistics' })
   @ApiParam({ name: 'id', description: 'Logistics ID' })
@@ -90,28 +113,5 @@ export class OrderLogisticsController {
   @ApiResponse({ status: 404, description: 'Order logistics not found' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.orderLogisticsService.remove(id);
-  }
-
-  @Patch('bulk-update')
-  @ApiOperation({ summary: 'Bulk update logistics for multiple order items' })
-  @ApiResponse({
-    status: 200,
-    description: 'Logistics updated/created successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        totalCount: { type: 'number', example: 5 },
-        results: {
-          type: 'array',
-          items: { type: 'object' },
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid item IDs' })
-  @ApiResponse({ status: 404, description: 'No items found with provided IDs' })
-  bulkUpdate(@Body() bulkUpdateDto: BulkUpdateOrderLogisticsDto) {
-    const { itemIds, ...updateData } = bulkUpdateDto;
-    return this.orderLogisticsService.bulkUpdate(itemIds, updateData);
   }
 }
