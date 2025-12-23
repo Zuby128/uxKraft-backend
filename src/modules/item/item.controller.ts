@@ -140,6 +140,29 @@ export class ItemsController {
     return this.itemsService.findOne(id);
   }
 
+  @Patch('bulk-update')
+  @ApiOperation({ summary: 'Bulk update multiple items' })
+  @ApiResponse({
+    status: 200,
+    description: 'Items updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        updatedCount: { type: 'number', example: 5 },
+        updatedItems: {
+          type: 'array',
+          items: { type: 'object' },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid item IDs or category ID' })
+  @ApiResponse({ status: 404, description: 'No items found with provided IDs' })
+  bulkUpdate(@Body() bulkUpdateItemDto: BulkUpdateItemDto) {
+    const { itemIds, ...updateData } = bulkUpdateItemDto;
+    return this.itemsService.bulkUpdate(itemIds, updateData as any);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update an item' })
   @ApiParam({ name: 'id', description: 'Item ID' })
@@ -176,27 +199,4 @@ export class ItemsController {
   restore(@Param('id', ParseIntPipe) id: number) {
     return this.itemsService.restore(id);
   }
-
-  // @Patch('bulk-update')
-  // @ApiOperation({ summary: 'Bulk update multiple items' })
-  // @ApiResponse({
-  //   status: 200,
-  //   description: 'Items updated successfully',
-  //   schema: {
-  //     type: 'object',
-  //     properties: {
-  //       updatedCount: { type: 'number', example: 5 },
-  //       updatedItems: {
-  //         type: 'array',
-  //         items: { type: 'object' },
-  //       },
-  //     },
-  //   },
-  // })
-  // @ApiResponse({ status: 400, description: 'Invalid item IDs or category ID' })
-  // @ApiResponse({ status: 404, description: 'No items found with provided IDs' })
-  // bulkUpdate(@Body() bulkUpdateItemDto: BulkUpdateItemDto) {
-  //   const { itemIds, ...updateData } = bulkUpdateItemDto;
-  //   return this.itemsService.bulkUpdate(itemIds, updateData);
-  // }
 }
