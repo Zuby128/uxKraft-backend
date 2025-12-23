@@ -101,7 +101,7 @@ export class ItemsService {
   }
 
   async search(filterDto: any): Promise<{ data: Item[]; meta: any }> {
-    const where: any = {};
+    const conditions: any[] = [];
 
     // Pagination
     const page = filterDto.page || 1;
@@ -110,57 +110,62 @@ export class ItemsService {
 
     // Phase filter
     if (filterDto.phase !== undefined) {
-      where.phase = filterDto.phase;
+      conditions.push({ phase: filterDto.phase });
     }
 
     // Vendor ID filter
     if (filterDto.vendorId) {
-      where.vendorId = filterDto.vendorId;
+      conditions.push({ vendorId: filterDto.vendorId });
     }
 
     // Customer ID filter
     if (filterDto.customerId) {
-      where.customerId = filterDto.customerId;
+      conditions.push({ customerId: filterDto.customerId });
     }
 
     // Item ID filter
     if (filterDto.itemId) {
-      where.itemId = filterDto.itemId;
+      conditions.push({ itemId: filterDto.itemId });
     }
 
     // Category ID filter
     if (filterDto.categoryId) {
-      where.categoryId = filterDto.categoryId;
+      conditions.push({ categoryId: filterDto.categoryId });
     }
 
     // Price range filter
     if (filterDto.minPrice !== undefined || filterDto.maxPrice !== undefined) {
-      where.totalPrice = {};
+      const priceCondition: any = {};
       if (filterDto.minPrice !== undefined) {
-        where.totalPrice[Op.gte] = filterDto.minPrice;
+        priceCondition[Op.gte] = filterDto.minPrice;
       }
       if (filterDto.maxPrice !== undefined) {
-        where.totalPrice[Op.lte] = filterDto.maxPrice;
+        priceCondition[Op.lte] = filterDto.maxPrice;
       }
+      conditions.push({ totalPrice: priceCondition });
     }
 
     // Search in item name or spec number
     if (filterDto.search) {
-      where[Op.or] = [
-        { itemName: { [Op.iLike]: `%${filterDto.search}%` } },
-        { specNo: { [Op.iLike]: `%${filterDto.search}%` } },
-      ];
+      conditions.push({
+        [Op.or]: [
+          { itemName: { [Op.iLike]: `%${filterDto.search}%` } },
+          { specNo: { [Op.iLike]: `%${filterDto.search}%` } },
+        ],
+      });
     }
 
     // Item name filter (partial match)
     if (filterDto.itemName && !filterDto.search) {
-      where.itemName = { [Op.iLike]: `%${filterDto.itemName}%` };
+      conditions.push({ itemName: { [Op.iLike]: `%${filterDto.itemName}%` } });
     }
 
     // Spec no filter (partial match)
     if (filterDto.specNo && !filterDto.search) {
-      where.specNo = { [Op.iLike]: `%${filterDto.specNo}%` };
+      conditions.push({ specNo: { [Op.iLike]: `%${filterDto.specNo}%` } });
     }
+
+    const where = conditions.length > 0 ? { [Op.and]: conditions } : {};
 
     const includeRelations = filterDto.includeRelations !== false;
 
@@ -178,7 +183,7 @@ export class ItemsService {
       : [ItemCategory, Vendor];
 
     const { count, rows } = await this.itemModel.findAndCountAll({
-      where: Object.keys(where).length > 0 ? where : undefined,
+      where,
       include,
       limit,
       offset,
