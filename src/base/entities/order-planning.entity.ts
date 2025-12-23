@@ -41,30 +41,23 @@ export class OrderPlanning extends Model<OrderPlanning> {
   @Column({
     type: DataType.DATEONLY,
     allowNull: true,
-    field: 'sample_approved_date',
+    field: 'po_approval_date',
   })
-  sampleApprovedDate: Date;
+  poApprovalDate: Date;
 
   @Column({
     type: DataType.DATEONLY,
     allowNull: true,
-    field: 'pi_send_date',
+    field: 'hotel_need_by_date',
   })
-  piSendDate: Date;
+  hotelNeedByDate: Date;
 
   @Column({
     type: DataType.DATEONLY,
     allowNull: true,
-    field: 'pi_approved_date',
+    field: 'expected_delivery',
   })
-  piApprovedDate: Date;
-
-  @Column({
-    type: DataType.DATEONLY,
-    allowNull: true,
-    field: 'initial_payment_date',
-  })
-  initialPaymentDate: Date;
+  expectedDelivery: Date;
 
   @CreatedAt
   @Column({

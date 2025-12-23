@@ -10,7 +10,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class BulkUpdateOrderPlanningDto {
   @ApiProperty({
-    description: 'Array of order item IDs to update planning for',
+    description: 'Array of item IDs to update planning for',
     example: [1, 2, 3, 4],
     type: [Number],
   })

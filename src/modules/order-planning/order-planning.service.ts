@@ -113,10 +113,9 @@ export class OrderPlanningService {
   async bulkUpdate(
     itemIds: number[],
     updateData: {
-      sampleApprovedDate?: string;
-      piSendDate?: string;
-      piApprovedDate?: string;
-      initialPaymentDate?: string;
+      poApprovalDate?: string;
+      hotelNeedByDate?: string;
+      expectedDelivery?: string;
     },
   ): Promise<{ totalCount: number; results: OrderPlanning[] }> {
     // Verify all items exist
@@ -145,10 +144,9 @@ export class OrderPlanningService {
         })) as any,
         {
           updateOnDuplicate: [
-            'sampleApprovedDate',
-            'piSendDate',
-            'piApprovedDate',
-            'initialPaymentDate',
+            'poApprovalDate',
+            'hotelNeedByDate',
+            'expectedDelivery',
             'updatedAt',
           ],
         },

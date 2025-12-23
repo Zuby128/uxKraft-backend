@@ -18,42 +18,32 @@ export class CreateOrderPlanningDto {
   itemId: number;
 
   @ApiPropertyOptional({
-    description: 'Sample approved date',
+    description: 'PO approval date',
     example: '2024-01-15',
     type: String,
     format: 'date',
   })
   @IsOptional()
   @IsDateString()
-  sampleApprovedDate?: string;
+  poApprovalDate?: string;
 
   @ApiPropertyOptional({
-    description: 'PI send date',
-    example: '2024-01-20',
-    type: String,
-    format: 'date',
-  })
-  @IsOptional()
-  @IsDateString()
-  piSendDate?: string;
-
-  @ApiPropertyOptional({
-    description: 'PI approved date',
-    example: '2024-01-25',
-    type: String,
-    format: 'date',
-  })
-  @IsOptional()
-  @IsDateString()
-  piApprovedDate?: string;
-
-  @ApiPropertyOptional({
-    description: 'Initial payment date',
+    description: 'Hotel need by date',
     example: '2024-02-01',
     type: String,
     format: 'date',
   })
   @IsOptional()
   @IsDateString()
-  initialPaymentDate?: string;
+  hotelNeedByDate?: string;
+
+  @ApiPropertyOptional({
+    description: 'Expected delivery date',
+    example: '2024-01-25',
+    type: String,
+    format: 'date',
+  })
+  @IsOptional()
+  @IsDateString()
+  expectedDelivery?: string;
 }
