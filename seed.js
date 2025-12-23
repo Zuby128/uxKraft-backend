@@ -1,13 +1,4 @@
 const { Sequelize } = require('sequelize-typescript');
-const { ItemCategory } = require('./src/base/entities/item-category.entity');
-const { Item } = require('./src/base/entities/item.entity');
-const { Vendor } = require('./src/base/entities/vendor.entity');
-const { Customer } = require('./src/base/entities/customer.entity');
-const { Address } = require('./src/base/entities/address.entity');
-const { OrderProduction } = require('./src/base/entities/order-production.entity');
-const { OrderPlanning } = require('./src/base/entities/order-planning.entity');
-const { OrderLogistics } = require('./src/base/entities/order-logistics.entity');
-const { Upload } = require('./src/base/entities/upload.entity');
 
 async function seed() {
 
@@ -35,17 +26,6 @@ async function seed() {
                     rejectUnauthorized: false,
                 },
             },
-            models: [
-                ItemCategory,
-                Item,
-                Vendor,
-                Customer,
-                Address,
-                OrderProduction,
-                OrderPlanning,
-                OrderLogistics,
-                Upload,
-            ],
             logging: console.log,
         });
 
