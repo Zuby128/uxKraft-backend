@@ -1,436 +1,194 @@
-const { Sequelize } = require('sequelize-typescript');
+const { Sequelize, DataTypes } = require('sequelize');
+
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: 'postgres',
+    logging: false,
+    dialectOptions: {
+        ssl: {
+            require: true,
+            rejectUnauthorized: false,
+        },
+    },
+});
 
 async function seed() {
-
-    const databaseUrl = process.env.DATABASE_URL;
-
-    if (!databaseUrl) {
-        console.error('❌ DATABASE_URL not found');
-        process.exit(1);
-    }
-
     try {
+        console.log('🌱 Starting seed process...');
 
-        const url = new URL(databaseUrl);
+        // 1. Clear existing data (in reverse order of dependencies)
+        console.log('🗑️  Clearing existing data...');
+        await sequelize.query('TRUNCATE TABLE uploads RESTART IDENTITY CASCADE;');
+        await sequelize.query('TRUNCATE TABLE order_logistics RESTART IDENTITY CASCADE;');
+        await sequelize.query('TRUNCATE TABLE order_production RESTART IDENTITY CASCADE;');
+        await sequelize.query('TRUNCATE TABLE order_planning RESTART IDENTITY CASCADE;');
+        await sequelize.query('TRUNCATE TABLE items RESTART IDENTITY CASCADE;');
+        await sequelize.query('TRUNCATE TABLE addresses RESTART IDENTITY CASCADE;');
+        await sequelize.query('TRUNCATE TABLE customers RESTART IDENTITY CASCADE;');
+        await sequelize.query('TRUNCATE TABLE vendors RESTART IDENTITY CASCADE;');
+        await sequelize.query('TRUNCATE TABLE item_categories RESTART IDENTITY CASCADE;');
 
-        const sequelize = new Sequelize({
-            dialect: 'postgres',
-            host: url.hostname,
-            port: parseInt(url.port, 10) || 5432,
-            username: url.username,
-            password: url.password,
-            database: url.pathname.slice(1),
-            dialectOptions: {
-                ssl: {
-                    require: true,
-                    rejectUnauthorized: false,
-                },
-            },
-            logging: console.log,
-        });
-
-        await sequelize.authenticate();
-        console.log('✅ Database connected\n');
-
-        // Create tables if they don't exist
-        console.log('🔨 Creating tables if not exist...');
-
+        // 2. Insert Categories
+        console.log('📦 Inserting categories...');
         await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS item_categories (
-                category_id SERIAL PRIMARY KEY,
-                name VARCHAR(50) UNIQUE NOT NULL,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW(),
-                deleted_at TIMESTAMP
-            );
-        `);
+      INSERT INTO item_categories (name, created_at, updated_at) VALUES
+      ('Furniture', NOW(), NOW()),
+      ('Lighting', NOW(), NOW()),
+      ('Decorative', NOW(), NOW()),
+      ('Textiles', NOW(), NOW()),
+      ('Electronics', NOW(), NOW());
+    `);
 
+        // 3. Insert Vendors
+        console.log('🏢 Inserting vendors...');
         await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS vendors (
-                vendor_id SERIAL PRIMARY KEY,
-                vendor_name VARCHAR(100) UNIQUE NOT NULL,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW(),
-                deleted_at TIMESTAMP
-            );
-        `);
+      INSERT INTO vendors (vendor_name, created_at, updated_at) VALUES
+      ('ACME Corporation', NOW(), NOW()),
+      ('Global Supplies Ltd', NOW(), NOW()),
+      ('Premium Goods Inc', NOW(), NOW());
+    `);
 
+        // 4. Insert Customers
+        console.log('👥 Inserting customers...');
         await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS customers (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(50),
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
-            );
-        `);
+      INSERT INTO customers (name, created_at, updated_at) VALUES
+      ('Luxury Hotel Group', NOW(), NOW()),
+      ('Grand Resort & Spa', NOW(), NOW()),
+      ('Elite Properties LLC', NOW(), NOW());
+    `);
 
+        // 5. Insert Addresses
+        console.log('📍 Inserting addresses...');
         await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS addresses (
-                address_id SERIAL PRIMARY KEY,
-                title VARCHAR(100),
-                address VARCHAR(200),
-                type VARCHAR(20),
-                reference_id INTEGER,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW(),
-                deleted_at TIMESTAMP
-            );
-        `);
+      INSERT INTO addresses (title, address, type, reference_id, created_at, updated_at) VALUES
+      -- Vendor Addresses
+      ('Main Office', '123 Business Ave, NY', 'vendor', 1, NOW(), NOW()),
+      ('Warehouse - East Coast', '456 Industrial Blvd, NJ', 'vendor', 1, NOW(), NOW()),
+      ('Head Office', '789 Trade St, CA', 'vendor', 2, NOW(), NOW()),
+      ('Distribution Center', '321 Logistics Rd, TX', 'vendor', 2, NOW(), NOW()),
+      ('Corporate HQ', '555 Commerce Dr, IL', 'vendor', 3, NOW(), NOW()),
+      ('Factory Outlet', '777 Manufacturing Way, OH', 'vendor', 3, NOW(), NOW()),
+      
+      -- Customer Addresses
+      ('Main Lobby', '100 Luxury Lane, Beverly Hills, CA 90210', 'customer', 1, NOW(), NOW()),
+      ('Guest Suites', '100 Luxury Lane, Beverly Hills, CA 90210', 'customer', 1, NOW(), NOW()),
+      ('Reception', '200 Ocean Drive, Miami, FL 33139', 'customer', 2, NOW(), NOW()),
+      ('Spa Building', '200 Ocean Drive, Miami, FL 33139', 'customer', 2, NOW(), NOW()),
+      ('Penthouse Floors', '300 Park Avenue, New York, NY 10022', 'customer', 3, NOW(), NOW()),
+      ('Conference Center', '300 Park Avenue, New York, NY 10022', 'customer', 3, NOW(), NOW());
+    `);
 
+        // 6. Insert Items
+        console.log('🛍️  Inserting items...');
         await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS items (
-                item_id SERIAL PRIMARY KEY,
-                spec_no VARCHAR(50) UNIQUE NOT NULL,
-                item_name VARCHAR(100) NOT NULL,
-                description TEXT,
-                category_id INTEGER REFERENCES item_categories(category_id),
-                unit_type VARCHAR(20) DEFAULT 'each',
-                notes TEXT,
-                location TEXT,
-                ship_from TEXT,
-                unit_price INTEGER NOT NULL,
-                markup_percentage DECIMAL(5,2) DEFAULT 0,
-                total_price INTEGER NOT NULL,
-                quantity INTEGER DEFAULT 1,
-                vendor_id INTEGER REFERENCES vendors(vendor_id),
-                vendor_address_id INTEGER REFERENCES addresses(address_id),
-                customer_id INTEGER REFERENCES customers(id),
-                customer_address_id INTEGER REFERENCES addresses(address_id),
-                phase INTEGER,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW(),
-                deleted_at TIMESTAMP
-            );
-        `);
+      INSERT INTO items (
+        spec_no, item_name, description, category_id, unit_type, notes,
+        location, ship_from, unit_price, markup_percentage, total_price,
+        quantity, vendor_id, vendor_address_id, customer_id, customer_address_id,
+        phase, upload, created_at, updated_at
+      ) VALUES
+      (
+        'SOFA-001', 'Leather Sofa', 'Premium Italian leather 3-seater', 1, 'each', 'Handle with care',
+        'Warehouse A', 'New York', 150000, 25.00, 187500,
+        50, 1, 2, 1, 7,
+        0, NULL, NOW(), NOW()
+      ),
+      (
+        'LAMP-001', 'Crystal Chandelier', 'Handcrafted crystal chandelier', 2, 'each', 'Fragile - Special packaging required',
+        'Warehouse B', 'Los Angeles', 75000, 30.00, 97500,
+        25, 2, 3, 1, 8,
+        1, NULL, NOW(), NOW()
+      ),
+      (
+        'ART-001', 'Modern Canvas Print', 'Limited edition abstract art', 3, 'piece', 'Signed by artist',
+        'Gallery Storage', 'San Francisco', 35000, 40.00, 49000,
+        100, 3, 5, 2, 9,
+        1, NULL, NOW(), NOW()
+      ),
+      (
+        'RUG-001', 'Persian Rug', 'Hand-woven wool rug 8x10', 4, 'each', 'Professional cleaning recommended',
+        'Warehouse C', 'Dallas', 200000, 20.00, 240000,
+        30, 2, 4, 2, 10,
+        2, NULL, NOW(), NOW()
+      ),
+      (
+        'TV-001', 'Smart TV 75"', '4K OLED display with smart features', 5, 'each', 'Wall mount included',
+        'Electronics Hub', 'Seattle', 120000, 15.00, 138000,
+        75, 1, 1, 3, 11,
+        2, NULL, NOW(), NOW()
+      ),
+      (
+        'CURT-001', 'Blackout Curtains', 'Thermal insulated blackout curtains', 4, 'pair', NULL,
+        'Warehouse A', 'Chicago', 18000, 30.00, 23400,
+        100, 1, 2, 2, 9,
+        2, NULL, NOW(), NOW()
+      );
+    `);
 
+        // 7. Insert Order Planning
+        console.log('📋 Inserting order planning...');
         await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS order_planning (
-                planning_id SERIAL PRIMARY KEY,
-                item_id INTEGER UNIQUE REFERENCES items(item_id),
-                sample_approved_date DATE,
-                pi_send_date DATE,
-                pi_approved_date DATE,
-                initial_payment_date DATE,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
-            );
-        `);
+      INSERT INTO order_planning (
+        item_id, sample_approved_date, pi_send_date, pi_approved_date, initial_payment_date,
+        created_at, updated_at
+      ) VALUES
+      (1, '2025-01-15', '2025-01-20', '2025-01-25', '2025-01-30', NOW(), NOW()),
+      (2, '2025-02-01', '2025-02-05', '2025-02-10', '2025-02-15', NOW(), NOW()),
+      (3, '2025-02-20', '2025-02-25', '2025-03-01', '2025-03-05', NOW(), NOW());
+    `);
 
+        // 8. Insert Order Production
+        console.log('🏭 Inserting order production...');
         await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS order_production (
-                production_id SERIAL PRIMARY KEY,
-                item_id INTEGER UNIQUE REFERENCES items(item_id),
-                cfa_shops_send DATE,
-                cfa_shops_approved DATE,
-                cfa_shops_delivered DATE,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
-            );
-        `);
+      INSERT INTO order_production (
+        item_id, cfa_shops_send, cfa_shops_approved, cfa_shops_delivered,
+        created_at, updated_at
+      ) VALUES
+      (2, '2025-03-01', '2025-03-10', '2025-03-20', NOW(), NOW()),
+      (3, '2025-03-15', '2025-03-25', '2025-04-05', NOW(), NOW()),
+      (4, '2025-04-01', '2025-04-10', '2025-04-20', NOW(), NOW());
+    `);
 
+        // 9. Insert Order Logistics
+        console.log('🚚 Inserting order logistics...');
         await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS order_logistics (
-                logistics_id SERIAL PRIMARY KEY,
-                item_id INTEGER UNIQUE REFERENCES items(item_id),
-                ordered_date DATE,
-                shipped_date DATE,
-                delivered_date DATE,
-                shipping_notes TEXT,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
-            );
-        `);
+      INSERT INTO order_logistics (
+        item_id, ordered_date, shipped_date, delivered_date, shipping_notes,
+        created_at, updated_at
+      ) VALUES
+      (4, '2025-05-01', '2025-05-10', '2025-05-20', 'Express shipping required', NOW(), NOW()),
+      (5, '2025-05-15', '2025-05-25', '2025-06-05', 'Standard shipping', NOW(), NOW()),
+      (6, '2025-06-01', '2025-06-10', NULL, 'In transit', NOW(), NOW());
+    `);
 
+        // 10. Insert Uploads
+        console.log('📎 Inserting uploads...');
         await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS uploads (
-                id SERIAL PRIMARY KEY,
-                item_id INTEGER REFERENCES items(item_id),
-                name TEXT,
-                url TEXT,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
-            );
-        `);
+      INSERT INTO uploads (item_id, name, url, created_at, updated_at) VALUES
+      (1, 'sofa-image-1.jpg', 'https://example.com/uploads/sofa-1.jpg', NOW(), NOW()),
+      (1, 'sofa-image-2.jpg', 'https://example.com/uploads/sofa-2.jpg', NOW(), NOW()),
+      (2, 'chandelier-specs.pdf', 'https://example.com/uploads/chandelier-specs.pdf', NOW(), NOW()),
+      (3, 'art-certificate.pdf', 'https://example.com/uploads/art-cert.pdf', NOW(), NOW()),
+      (4, 'rug-pattern.jpg', 'https://example.com/uploads/rug-pattern.jpg', NOW(), NOW()),
+      (5, 'tv-manual.pdf', 'https://example.com/uploads/tv-manual.pdf', NOW(), NOW());
+    `);
 
-        console.log('✅ Tables created/verified\n');
-
-        // 1. Categories
-        console.log('🌱 Seeding categories...');
-        await sequelize.query(`
-            INSERT INTO item_categories (name, created_at, updated_at) 
-            VALUES 
-                ('Furniture', NOW(), NOW()),
-                ('Lighting', NOW(), NOW()),
-                ('Decor', NOW(), NOW()),
-                ('Textiles', NOW(), NOW()),
-                ('Artwork', NOW(), NOW()),
-                ('Office Equipment', NOW(), NOW()),
-                ('Kitchen & Dining', NOW(), NOW()),
-                ('Outdoor', NOW(), NOW())
-            ON CONFLICT (name) DO NOTHING;
-        `);
-        console.log('✅ Seeded 8 categories\n');
-
-        // 2. Vendors
-        console.log('🌱 Seeding vendors...');
-        await sequelize.query(`
-            INSERT INTO vendors (vendor_name, created_at, updated_at) 
-            VALUES 
-                ('ACME Corporation', NOW(), NOW()),
-                ('Global Furniture Ltd', NOW(), NOW()),
-                ('Premium Decor Inc', NOW(), NOW()),
-                ('Modern Living Co', NOW(), NOW()),
-                ('Classic Interiors', NOW(), NOW()),
-                ('Urban Design Group', NOW(), NOW())
-            ON CONFLICT (vendor_name) DO NOTHING;
-        `);
-        console.log('✅ Seeded 6 vendors\n');
-
-        // 3. Customers
-        console.log('🌱 Seeding customers...');
-        await sequelize.query(`
-            INSERT INTO customers (name, created_at, updated_at)
-            VALUES 
-                ('Hotel California', NOW(), NOW()),
-                ('Grand Resort & Spa', NOW(), NOW()),
-                ('Downtown Business Center', NOW(), NOW()),
-                ('Luxury Suites Hotel', NOW(), NOW()),
-                ('Seaside Inn', NOW(), NOW())
-            ON CONFLICT DO NOTHING;
-        `);
-        console.log('✅ Seeded 5 customers\n');
-
-        // 4. Addresses (Vendor & Customer)
-        console.log('🌱 Seeding addresses...');
-        await sequelize.query(`
-            WITH vendor_refs AS (
-                SELECT vendor_id, vendor_name FROM vendors
-            ),
-            customer_refs AS (
-                SELECT id, name FROM customers
-            )
-            INSERT INTO addresses (title, address, type, reference_id, created_at, updated_at)
-            -- Vendor Addresses
-            SELECT 'Main Office', '123 Business Park, NY', 'vendor', vr.vendor_id, NOW(), NOW()
-            FROM vendor_refs vr WHERE vr.vendor_name = 'ACME Corporation'
-            UNION ALL
-            SELECT 'Warehouse - East Coast', '456 Industrial Blvd, NJ', 'vendor', vr.vendor_id, NOW(), NOW()
-            FROM vendor_refs vr WHERE vr.vendor_name = 'ACME Corporation'
-            UNION ALL
-            SELECT 'Headquarters', '789 Commerce St, Chicago', 'vendor', vr.vendor_id, NOW(), NOW()
-            FROM vendor_refs vr WHERE vr.vendor_name = 'Global Furniture Ltd'
-            UNION ALL
-            SELECT 'Distribution Center', '321 Logistics Way, Gary', 'vendor', vr.vendor_id, NOW(), NOW()
-            FROM vendor_refs vr WHERE vr.vendor_name = 'Global Furniture Ltd'
-            UNION ALL
-            SELECT 'Design Studio', '555 Creative Blvd, Miami', 'vendor', vr.vendor_id, NOW(), NOW()
-            FROM vendor_refs vr WHERE vr.vendor_name = 'Premium Decor Inc'
-            UNION ALL
-            SELECT 'Innovation Hub', '777 Tech Park, San Francisco', 'vendor', vr.vendor_id, NOW(), NOW()
-            FROM vendor_refs vr WHERE vr.vendor_name = 'Modern Living Co'
-            -- Customer Addresses
-            UNION ALL
-            SELECT 'Main Building', '1 Beach Road, Los Angeles, CA 90001', 'customer', cr.id, NOW(), NOW()
-            FROM customer_refs cr WHERE cr.name = 'Hotel California'
-            UNION ALL
-            SELECT 'East Wing', '1-B Beach Road, Los Angeles, CA 90001', 'customer', cr.id, NOW(), NOW()
-            FROM customer_refs cr WHERE cr.name = 'Hotel California'
-            UNION ALL
-            SELECT 'Reception', '200 Ocean Drive, Miami, FL 33139', 'customer', cr.id, NOW(), NOW()
-            FROM customer_refs cr WHERE cr.name = 'Grand Resort & Spa'
-            UNION ALL
-            SELECT 'Office Building', '500 5th Avenue, New York, NY 10110', 'customer', cr.id, NOW(), NOW()
-            FROM customer_refs cr WHERE cr.name = 'Downtown Business Center'
-            UNION ALL
-            SELECT 'Main Entrance', '100 Park Lane, Chicago, IL 60601', 'customer', cr.id, NOW(), NOW()
-            FROM customer_refs cr WHERE cr.name = 'Luxury Suites Hotel'
-            ON CONFLICT DO NOTHING;
-        `);
-        console.log('✅ Seeded 10 addresses (6 vendor + 4 customer)\n');
-
-        // 5. Items (with order fields)
-        console.log('🌱 Seeding items...');
-        await sequelize.query(`
-            WITH category_refs AS (
-                SELECT category_id, name FROM item_categories
-            ),
-            vendor_refs AS (
-                SELECT vendor_id, vendor_name FROM vendors
-            ),
-            customer_refs AS (
-                SELECT id, name FROM customers
-            ),
-            vendor_addr_refs AS (
-                SELECT address_id, reference_id, title FROM addresses WHERE type = 'vendor'
-            ),
-            customer_addr_refs AS (
-                SELECT address_id, reference_id, title FROM addresses WHERE type = 'customer'
-            )
-            INSERT INTO items (
-                spec_no, item_name, category_id, unit_price, markup_percentage, 
-                total_price, location, ship_from, unit_type,
-                quantity, vendor_id, vendor_address_id, customer_id, customer_address_id, phase,
-                created_at, updated_at
-            )
-            SELECT 
-                data.spec_no,
-                data.item_name,
-                cr.category_id,
-                data.unit_price,
-                data.markup_percentage,
-                data.total_price,
-                data.location,
-                data.ship_from,
-                data.unit_type,
-                data.quantity,
-                vr.vendor_id,
-                var.address_id as vendor_address_id,
-                cust.id as customer_id,
-                car.address_id as customer_address_id,
-                data.phase,
-                NOW(),
-                NOW()
-            FROM (VALUES
-                ('SOFA-001', 'Premium Leather Sofa', 'Furniture', 150000, 20.00, 180000, 'Warehouse A', 'New York', 'each', 
-                 15, 'ACME Corporation', 'Main Office', 'Hotel California', 'Main Building', 3),
-                ('CHAIR-001', 'Executive Office Chair', 'Furniture', 45000, 25.00, 56250, 'Warehouse A', 'Chicago', 'each',
-                 30, 'ACME Corporation', 'Main Office', 'Hotel California', 'Main Building', 2),
-                ('TABLE-001', 'Conference Table', 'Furniture', 280000, 15.00, 322000, 'Warehouse B', 'New York', 'each',
-                 10, 'Global Furniture Ltd', 'Headquarters', 'Downtown Business Center', 'Office Building', 1),
-                ('LAMP-001', 'Crystal Chandelier', 'Lighting', 95000, 30.00, 123500, 'Warehouse C', 'LA', 'each',
-                 20, 'Premium Decor Inc', 'Design Studio', 'Grand Resort & Spa', 'Reception', 2),
-                ('LAMP-002', 'LED Desk Lamp', 'Lighting', 8000, 40.00, 11200, 'Warehouse A', 'Chicago', 'each',
-                 50, 'Modern Living Co', 'Innovation Hub', 'Downtown Business Center', 'Office Building', 1),
-                ('DECOR-001', 'Modern Wall Art', 'Decor', 35000, 50.00, 52500, 'Warehouse B', 'New York', 'each',
-                 25, 'Premium Decor Inc', 'Design Studio', 'Hotel California', 'East Wing', 0),
-                ('VASE-001', 'Ceramic Floor Vase', 'Decor', 12000, 35.00, 16200, 'Warehouse C', 'LA', 'each',
-                 40, 'Premium Decor Inc', 'Design Studio', 'Luxury Suites Hotel', 'Main Entrance', 1),
-                ('CURT-001', 'Blackout Curtains', 'Textiles', 18000, 30.00, 23400, 'Warehouse A', 'Chicago', 'pair',
-                 100, 'ACME Corporation', 'Warehouse - East Coast', 'Grand Resort & Spa', 'Reception', 2),
-                ('RUG-001', 'Persian Area Rug', 'Textiles', 450000, 20.00, 540000, 'Warehouse B', 'New York', 'each',
-                 5, 'Global Furniture Ltd', 'Distribution Center', 'Hotel California', 'Main Building', 3)
-            ) AS data(
-                spec_no, item_name, category_name, unit_price, markup_percentage, total_price, 
-                location, ship_from, unit_type, quantity, vendor_name, vendor_addr_title, 
-                customer_name, customer_addr_title, phase
-            )
-            JOIN category_refs cr ON cr.name = data.category_name
-            JOIN vendor_refs vr ON vr.vendor_name = data.vendor_name
-            JOIN customer_refs cust ON cust.name = data.customer_name
-            JOIN vendor_addr_refs var ON var.reference_id = vr.vendor_id AND var.title = data.vendor_addr_title
-            JOIN customer_addr_refs car ON car.reference_id = cust.id AND car.title = data.customer_addr_title
-            ON CONFLICT (spec_no) DO NOTHING;
-        `);
-        console.log('✅ Seeded 9 items with order details\n');
-
-        // 6. Order Planning
-        console.log('🌱 Seeding order planning...');
-        await sequelize.query(`
-            INSERT INTO order_planning (
-                item_id, sample_approved_date, pi_send_date, 
-                pi_approved_date, initial_payment_date, created_at, updated_at
-            )
-            SELECT 
-                i.item_id,
-                '2024-01-10'::date,
-                '2024-01-15'::date,
-                '2024-01-20'::date,
-                '2024-01-25'::date,
-                NOW(),
-                NOW()
-            FROM items i
-            WHERE i.spec_no IN ('SOFA-001', 'CHAIR-001', 'TABLE-001', 'LAMP-001')
-                AND i.phase >= 1
-            ON CONFLICT (item_id) DO NOTHING;
-        `);
-        console.log('✅ Seeded 4 order planning records\n');
-
-        // 7. Order Production
-        console.log('🌱 Seeding order production...');
-        await sequelize.query(`
-            INSERT INTO order_production (
-                item_id, cfa_shops_send, cfa_shops_approved, 
-                cfa_shops_delivered, created_at, updated_at
-            )
-            SELECT 
-                i.item_id,
-                '2024-01-20'::date,
-                '2024-01-25'::date,
-                '2024-02-01'::date,
-                NOW(),
-                NOW()
-            FROM items i
-            WHERE i.spec_no IN ('SOFA-001', 'CHAIR-001', 'LAMP-001')
-                AND i.phase >= 2
-            ON CONFLICT (item_id) DO NOTHING;
-        `);
-        console.log('✅ Seeded 3 order production records\n');
-
-        // 8. Order Logistics
-        console.log('🌱 Seeding order logistics...');
-        await sequelize.query(`
-            INSERT INTO order_logistics (
-                item_id, ordered_date, shipped_date, delivered_date,
-                shipping_notes, created_at, updated_at
-            )
-            SELECT 
-                i.item_id,
-                '2024-02-06'::date,
-                '2024-02-08'::date,
-                '2024-02-12'::date,
-                'Express shipping completed',
-                NOW(),
-                NOW()
-            FROM items i
-            WHERE i.spec_no IN ('SOFA-001', 'RUG-001')
-                AND i.phase >= 3
-            ON CONFLICT (item_id) DO NOTHING;
-        `);
-        console.log('✅ Seeded 2 order logistics records\n');
-
-        // 9. Uploads
-        console.log('🌱 Seeding uploads...');
-        await sequelize.query(`
-            INSERT INTO uploads (item_id, name, url, created_at, updated_at)
-            SELECT 
-                i.item_id,
-                'PO_' || i.spec_no || '.pdf',
-                'https://cdn.example.com/po_' || LOWER(i.spec_no) || '.pdf',
-                NOW(),
-                NOW()
-            FROM items i
-            WHERE i.spec_no IN ('SOFA-001', 'CHAIR-001', 'TABLE-001')
-            UNION ALL
-            SELECT 
-                i.item_id,
-                'Invoice_' || i.spec_no || '.pdf',
-                'https://cdn.example.com/invoice_' || LOWER(i.spec_no) || '.pdf',
-                NOW(),
-                NOW()
-            FROM items i
-            WHERE i.spec_no IN ('SOFA-001', 'LAMP-001')
-            ON CONFLICT DO NOTHING;
-        `);
-        console.log('✅ Seeded 5 upload records\n');
-
-        console.log('🎉 ✅ All seed data completed successfully!');
+        console.log('✅ Seed completed successfully!');
         console.log('📊 Summary:');
-        console.log('   - 8 Categories');
-        console.log('   - 6 Vendors');
-        console.log('   - 5 Customers');
-        console.log('   - 10 Addresses (6 vendor + 4 customer)');
-        console.log('   - 9 Items (with order details integrated)');
-        console.log('   - 4 Order Planning records');
+        console.log('   - 5 Categories');
+        console.log('   - 3 Vendors');
+        console.log('   - 3 Customers');
+        console.log('   - 12 Addresses (6 vendor + 6 customer)');
+        console.log('   - 6 Items');
+        console.log('   - 3 Order Planning records');
         console.log('   - 3 Order Production records');
-        console.log('   - 2 Order Logistics records');
-        console.log('   - 5 Upload records\n');
+        console.log('   - 3 Order Logistics records');
+        console.log('   - 6 Upload records');
 
-        await sequelize.close();
-        process.exit(0);
     } catch (error) {
-        console.error('❌ Seed failed:', error.message);
-        console.error(error);
-        process.exit(1);
+        console.error('❌ Seed failed:', error);
+        throw error;
+    } finally {
+        await sequelize.close();
     }
 }
 
