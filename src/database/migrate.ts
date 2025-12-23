@@ -14,9 +14,27 @@ import { Upload } from 'src/base/entities/upload.entity';
 async function runMigrations() {
   console.log('🔄 Starting database migration...');
 
-  // Create Sequelize instance with models
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL missing');
+  }
+  const url = new URL(databaseUrl);
+
   const sequelize = new Sequelize({
-    ...databaseConfig,
+    dialect: 'postgres',
+    host: url.hostname,
+    port: Number(url.port) || 5432,
+    username: url.username,
+    password: url.password,
+    database: url.pathname.slice(1),
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
+      },
+    },
+
     models: [
       ItemCategory,
       Item,
