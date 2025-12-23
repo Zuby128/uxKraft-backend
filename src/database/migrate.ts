@@ -19,22 +19,10 @@ async function runMigrations() {
   if (!databaseUrl) {
     throw new Error('DATABASE_URL missing');
   }
-  const url = new URL(databaseUrl);
 
+  // Create Sequelize instance with models
   const sequelize = new Sequelize({
-    dialect: 'postgres',
-    host: url.hostname,
-    port: Number(url.port) || 5432,
-    username: url.username,
-    password: url.password,
-    database: url.pathname.slice(1),
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false,
-      },
-    },
-
+    ...databaseConfig,
     models: [
       ItemCategory,
       Item,
