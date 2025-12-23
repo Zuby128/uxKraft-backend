@@ -32,15 +32,127 @@ async function seed() {
         await sequelize.authenticate();
         console.log('✅ Database connected\n');
 
-        // CLEAN OLD SCHEMA
-        console.log('🧹 Cleaning old schema...');
-        // await sequelize.query(`DROP TABLE IF EXISTS uploads CASCADE;`);
-        // await sequelize.query(`DROP TABLE IF EXISTS order_logistics CASCADE;`);
-        // await sequelize.query(`DROP TABLE IF EXISTS order_production CASCADE;`);
-        // await sequelize.query(`DROP TABLE IF EXISTS order_planning CASCADE;`);
-        // await sequelize.query(`DROP TABLE IF EXISTS order_items CASCADE;`);
-        // await sequelize.query(`DROP TABLE IF EXISTS vendor_addresses CASCADE;`);
-        console.log('✅ Old tables dropped\n');
+        // Create tables if they don't exist
+        console.log('🔨 Creating tables if not exist...');
+
+        await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS item_categories (
+                category_id SERIAL PRIMARY KEY,
+                name VARCHAR(50) UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
+            );
+        `);
+
+        await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS vendors (
+                vendor_id SERIAL PRIMARY KEY,
+                vendor_name VARCHAR(100) UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
+            );
+        `);
+
+        await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS customers (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(50),
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+        `);
+
+        await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS addresses (
+                address_id SERIAL PRIMARY KEY,
+                title VARCHAR(100),
+                address VARCHAR(200),
+                type VARCHAR(20),
+                reference_id INTEGER,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
+            );
+        `);
+
+        await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS items (
+                item_id SERIAL PRIMARY KEY,
+                spec_no VARCHAR(50) UNIQUE NOT NULL,
+                item_name VARCHAR(100) NOT NULL,
+                description TEXT,
+                category_id INTEGER REFERENCES item_categories(category_id),
+                unit_type VARCHAR(20) DEFAULT 'each',
+                notes TEXT,
+                location TEXT,
+                ship_from TEXT,
+                unit_price INTEGER NOT NULL,
+                markup_percentage DECIMAL(5,2) DEFAULT 0,
+                total_price INTEGER NOT NULL,
+                quantity INTEGER DEFAULT 1,
+                vendor_id INTEGER REFERENCES vendors(vendor_id),
+                vendor_address_id INTEGER REFERENCES addresses(address_id),
+                customer_id INTEGER REFERENCES customers(id),
+                customer_address_id INTEGER REFERENCES addresses(address_id),
+                phase INTEGER,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
+            );
+        `);
+
+        await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS order_planning (
+                planning_id SERIAL PRIMARY KEY,
+                item_id INTEGER UNIQUE REFERENCES items(item_id),
+                sample_approved_date DATE,
+                pi_send_date DATE,
+                pi_approved_date DATE,
+                initial_payment_date DATE,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+        `);
+
+        await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS order_production (
+                production_id SERIAL PRIMARY KEY,
+                item_id INTEGER UNIQUE REFERENCES items(item_id),
+                cfa_shops_send DATE,
+                cfa_shops_approved DATE,
+                cfa_shops_delivered DATE,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+        `);
+
+        await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS order_logistics (
+                logistics_id SERIAL PRIMARY KEY,
+                item_id INTEGER UNIQUE REFERENCES items(item_id),
+                ordered_date DATE,
+                shipped_date DATE,
+                delivered_date DATE,
+                shipping_notes TEXT,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+        `);
+
+        await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS uploads (
+                id SERIAL PRIMARY KEY,
+                item_id INTEGER REFERENCES items(item_id),
+                name TEXT,
+                url TEXT,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+        `);
+
+        console.log('✅ Tables created/verified\n');
 
         // 1. Categories
         console.log('🌱 Seeding categories...');
